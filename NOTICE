@@ -1,0 +1,34 @@
+silk — Notice
+=============
+
+The GEUL project's own work in this repository is dedicated to the public
+domain under CC0 1.0 Universal (see LICENSE). Third-party material keeps its
+own license and is not covered by CC0.
+
+--------------------------------------------------------------------------------
+Go (module: github.com/park-jun-woo/silk)
+--------------------------------------------------------------------------------
+silk reads GEUL pack archives through github.com/geul-org/gogeul (CC0 1.0,
+GEUL project). Its pkg/pack compiles in github.com/klauspost/compress, so every
+silk program that opens an archive includes it.
+
+* github.com/klauspost/compress  v1.20.3  (packages zstd, zstd/internal/xxhash,
+  fse, huff0, internal/snapref, internal/cpuinfo, internal/le, internal/regmask)
+    License:     BSD-3-Clause
+    Copyright:   Copyright (c) 2012 The Go Authors. All rights reserved.
+                 Copyright (c) 2019 Klaus Post. All rights reserved.
+    URL:         https://github.com/klauspost/compress
+  zstd/internal/xxhash:
+    License:     MIT
+    Copyright:   Copyright (c) 2016 Caleb Spare
+    URL:         https://github.com/cespare/xxhash
+  internal/snapref:
+    License:     BSD-3-Clause
+    Copyright:   Copyright (c) 2011 The Snappy-Go Authors. All rights reserved.
+  The module's LICENSE file holds the full texts.
+
+--------------------------------------------------------------------------------
+Test data
+--------------------------------------------------------------------------------
+testdata/archive holds four GEUL documents converted from Wikidata items
+(Wikidata data is CC0 1.0 Universal).
