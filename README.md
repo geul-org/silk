@@ -105,5 +105,6 @@ records and their fields from TAG WORDs alone, without a codebook.
 
 ## License
 
-silk is released under the [MIT License](LICENSE). Third-party components keep
-their licenses; see [NOTICE](NOTICE).
+The project's own work is dedicated to the public domain under
+[CC0 1.0](LICENSE). Third-party components keep their licenses; see
+[NOTICE](NOTICE).
