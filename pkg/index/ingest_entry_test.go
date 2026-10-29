@@ -5,7 +5,7 @@ package index
 import (
 	"testing"
 
-	"github.com/park-jun-woo/silk/pkg/archive"
+	"github.com/geul-org/silk/pkg/archive"
 )
 
 func TestIngestEntry(t *testing.T) {

@@ -2,7 +2,7 @@
 //ff:what openSegs — the segment files of every section (runs, then appended segments)
 package index
 
-import "github.com/park-jun-woo/silk/pkg/seg"
+import "github.com/geul-org/silk/pkg/seg"
 
 // openSegs opens each section; on error the files opened so far are closed.
 func openSegs(dir string, m Manifest) ([][]*seg.File, error) {

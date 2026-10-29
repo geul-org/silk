@@ -6,7 +6,7 @@ domain under CC0 1.0 Universal (see LICENSE). Third-party material keeps its
 own license and is not covered by CC0.
 
 --------------------------------------------------------------------------------
-Go (module: github.com/park-jun-woo/silk)
+Go (module: github.com/geul-org/silk)
 --------------------------------------------------------------------------------
 silk reads GEUL pack archives through github.com/geul-org/gogeul (CC0 1.0,
 GEUL project). Its pkg/pack compiles in github.com/klauspost/compress, so every

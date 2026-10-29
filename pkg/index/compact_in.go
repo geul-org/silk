@@ -7,7 +7,7 @@ import (
 	"errors"
 	"path/filepath"
 
-	"github.com/park-jun-woo/silk/pkg/spec"
+	"github.com/geul-org/silk/pkg/spec"
 )
 
 // compact edits *m generation by generation.

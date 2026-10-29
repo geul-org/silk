@@ -5,7 +5,7 @@ package index
 import (
 	"fmt"
 
-	"github.com/park-jun-woo/silk/pkg/spec"
+	"github.com/geul-org/silk/pkg/spec"
 )
 
 // Record reads record off of document doc.

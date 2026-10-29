@@ -7,7 +7,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/park-jun-woo/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/index"
 )
 
 // printReport writes one summary line and one line per merge.

@@ -5,7 +5,7 @@ package cli
 import (
 	"testing"
 
-	"github.com/park-jun-woo/silk/internal/fixture"
+	"github.com/geul-org/silk/internal/fixture"
 )
 
 // packedIndex returns the data folder; the index is at <data>/.silk.

@@ -8,7 +8,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/park-jun-woo/silk/pkg/idle"
+	"github.com/geul-org/silk/pkg/idle"
 )
 
 // idlePause samples with read (idle.Read outside tests).

@@ -5,7 +5,7 @@ package query
 import (
 	"fmt"
 
-	"github.com/park-jun-woo/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/index"
 )
 
 // NewPlan lays out how Run answers q with threads checking goroutines.

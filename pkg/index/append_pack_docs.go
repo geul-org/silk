@@ -2,7 +2,7 @@
 //ff:what appendPackDocs — the documents of a set's data packs as liveDocs, pack by pack
 package index
 
-import "github.com/park-jun-woo/silk/pkg/archive"
+import "github.com/geul-org/silk/pkg/archive"
 
 // appendPackDocs flattens packs.
 func appendPackDocs(out []liveDoc, set string, packs []archive.Pack) []liveDoc {

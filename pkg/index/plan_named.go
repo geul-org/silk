@@ -2,7 +2,7 @@
 //ff:what planNamed — the due tasks of a manifest with output file names reserved and each tag's minimum partition
 package index
 
-import "github.com/park-jun-woo/silk/pkg/spec"
+import "github.com/geul-org/silk/pkg/spec"
 
 // planNamed completes Plan's tasks for execution.
 func planNamed(m *Manifest, sp spec.Spec, o Options) []Task {

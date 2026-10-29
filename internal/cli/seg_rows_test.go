@@ -5,7 +5,7 @@ package cli
 import (
 	"testing"
 
-	"github.com/park-jun-woo/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/index"
 )
 
 func TestSegRows(t *testing.T) {

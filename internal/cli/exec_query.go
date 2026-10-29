@@ -8,8 +8,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/park-jun-woo/silk/pkg/index"
-	"github.com/park-jun-woo/silk/pkg/query"
+	"github.com/geul-org/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/query"
 )
 
 // execQuery prints `<path> #e1,#e2` lines and a summary on stderr.

@@ -5,7 +5,7 @@ package query
 import (
 	"sort"
 
-	"github.com/park-jun-woo/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/index"
 )
 
 // toResults names each document through the index's document table.

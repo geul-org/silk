@@ -6,7 +6,7 @@ import (
 	"cmp"
 	"slices"
 
-	"github.com/park-jun-woo/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/index"
 )
 
 // selectCond runs the segment lookup of one condition.

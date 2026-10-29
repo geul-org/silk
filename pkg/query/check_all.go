@@ -5,7 +5,7 @@ package query
 import (
 	"sync"
 
-	"github.com/park-jun-woo/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/index"
 )
 
 // checkAll splits cs into contiguous chunks; the first error wins.

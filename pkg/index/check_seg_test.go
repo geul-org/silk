@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/park-jun-woo/silk/pkg/seg"
+	"github.com/geul-org/silk/pkg/seg"
 )
 
 func TestCheckSeg(t *testing.T) {

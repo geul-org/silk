@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/geul-org/gogeul/pkg/pack"
-	"github.com/park-jun-woo/silk/internal/fixture"
+	"github.com/geul-org/silk/internal/fixture"
 )
 
 func TestSetPacks(t *testing.T) {

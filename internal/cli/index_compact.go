@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/park-jun-woo/silk/pkg/idle"
-	"github.com/park-jun-woo/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/idle"
+	"github.com/geul-org/silk/pkg/index"
 )
 
 // indexCompact runs index.Compact under ctx.

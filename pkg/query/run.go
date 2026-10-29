@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/park-jun-woo/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/index"
 )
 
 // Run answers p over ix.

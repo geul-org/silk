@@ -5,7 +5,7 @@ package index
 import (
 	"path/filepath"
 
-	"github.com/park-jun-woo/silk/pkg/seg"
+	"github.com/geul-org/silk/pkg/seg"
 )
 
 // openRefs opens rs under dir.

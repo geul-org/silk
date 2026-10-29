@@ -2,7 +2,7 @@
 //ff:what runCond — one condition end to end: segment lookup, exact check, hits grouped by document
 package query
 
-import "github.com/park-jun-woo/silk/pkg/index"
+import "github.com/geul-org/silk/pkg/index"
 
 // runCond returns the documents meeting cp.
 func runCond(ix *index.Index, cp CondPlan, threads int, st *Stats) ([]docHit, error) {

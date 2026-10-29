@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/park-jun-woo/silk/pkg/archive"
+	"github.com/geul-org/silk/pkg/archive"
 )
 
 // packPaths finds each pack's set by name.

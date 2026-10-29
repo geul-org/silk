@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/park-jun-woo/silk/pkg/idle"
+	"github.com/geul-org/silk/pkg/idle"
 )
 
 func TestIdlePause(t *testing.T) {

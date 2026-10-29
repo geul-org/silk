@@ -2,7 +2,7 @@
 //ff:what openGroups — open a merge's input segments and list their groups in key order; the files are returned even on a grouping error so the caller closes them
 package index
 
-import "github.com/park-jun-woo/silk/pkg/seg"
+import "github.com/geul-org/silk/pkg/seg"
 
 // openGroups is mergeTask's input.
 func openGroups(dir string, rs []SegRef) ([]*seg.File, []seg.Group, error) {

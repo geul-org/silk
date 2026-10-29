@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/park-jun-woo/silk/pkg/seg"
+	"github.com/geul-org/silk/pkg/seg"
 )
 
 // mergeTask returns ErrPaused with a checkpoint when ctx ends or pause fails.

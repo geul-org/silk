@@ -2,7 +2,7 @@
 //ff:what setRefs — an archive's sets as manifest SetRefs
 package index
 
-import "github.com/park-jun-woo/silk/pkg/archive"
+import "github.com/geul-org/silk/pkg/archive"
 
 // setRefs records a's current generations.
 func setRefs(a *archive.Archive) []SetRef {

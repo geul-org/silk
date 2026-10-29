@@ -13,7 +13,7 @@ change before a first release.
 ## Install
 
 ```sh
-go install github.com/park-jun-woo/silk/cmd/silk@latest
+go install github.com/geul-org/silk/cmd/silk@latest
 ```
 
 SILK reads GEUL pack archives through

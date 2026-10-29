@@ -5,7 +5,7 @@ package cli
 import (
 	"io"
 
-	"github.com/park-jun-woo/silk/pkg/spec"
+	"github.com/geul-org/silk/pkg/spec"
 )
 
 // indexSpec writes spec.Default().

@@ -5,7 +5,7 @@ package query
 import (
 	"fmt"
 
-	"github.com/park-jun-woo/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/index"
 )
 
 // checkChunk is one goroutine's share of checkAll.

@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/park-jun-woo/silk/pkg/archive"
-	"github.com/park-jun-woo/silk/pkg/spec"
+	"github.com/geul-org/silk/pkg/archive"
+	"github.com/geul-org/silk/pkg/spec"
 )
 
 // load fills ix for generation gen.

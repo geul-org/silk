@@ -3,7 +3,7 @@
 package index
 
 import (
-	"github.com/park-jun-woo/silk/pkg/seg"
+	"github.com/geul-org/silk/pkg/seg"
 )
 
 // expectRows reads every document with an ingest that never writes.

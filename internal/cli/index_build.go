@@ -6,8 +6,8 @@ import (
 	"context"
 	"io"
 
-	"github.com/park-jun-woo/silk/pkg/archive"
-	"github.com/park-jun-woo/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/archive"
+	"github.com/geul-org/silk/pkg/index"
 )
 
 // indexBuild runs index.Build with -spec or the default spec.

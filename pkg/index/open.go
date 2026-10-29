@@ -2,7 +2,7 @@
 //ff:what Open — pin the current generation and load it against the archive (stale sets are ErrStale)
 package index
 
-import "github.com/park-jun-woo/silk/pkg/archive"
+import "github.com/geul-org/silk/pkg/archive"
 
 // Open opens dir's current generation for queries. Close releases the pin.
 func Open(a *archive.Archive, dir string) (*Index, error) {

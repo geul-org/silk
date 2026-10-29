@@ -6,7 +6,7 @@ import (
 	"flag"
 	"io"
 
-	"github.com/park-jun-woo/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/index"
 )
 
 // newQueryFlags binds every query flag to f.

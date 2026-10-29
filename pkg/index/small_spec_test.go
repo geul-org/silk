@@ -2,7 +2,7 @@
 //ff:what smallSpec — test helper: the default spec with minimum partition 2, so the small test archive has table partitions and other partitions
 package index
 
-import "github.com/park-jun-woo/silk/pkg/spec"
+import "github.com/geul-org/silk/pkg/spec"
 
 // smallSpec suits four documents.
 func smallSpec() spec.Spec {

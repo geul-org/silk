@@ -6,8 +6,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/park-jun-woo/silk/internal/fixture"
-	"github.com/park-jun-woo/silk/pkg/archive"
+	"github.com/geul-org/silk/internal/fixture"
+	"github.com/geul-org/silk/pkg/archive"
 )
 
 // evolved runs fixture.Evolve and reopens the archive.

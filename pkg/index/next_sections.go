@@ -5,7 +5,7 @@ package index
 import (
 	"encoding/hex"
 
-	"github.com/park-jun-woo/silk/pkg/spec"
+	"github.com/geul-org/silk/pkg/spec"
 )
 
 // nextSections orders sections as sp.Tags. Sections of tags no longer in

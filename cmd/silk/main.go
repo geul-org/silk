@@ -5,7 +5,7 @@ package main
 import (
 	"os"
 
-	"github.com/park-jun-woo/silk/internal/cli"
+	"github.com/geul-org/silk/internal/cli"
 )
 
 func main() {

@@ -2,7 +2,7 @@
 //ff:what kindOf — the Kind and Codec of an Edge layout name (TRIPLE, LABEL, ...)
 package query
 
-import "github.com/park-jun-woo/silk/pkg/spec"
+import "github.com/geul-org/silk/pkg/spec"
 
 // kindOf searches the direct Edge codecs.
 func kindOf(name string) (uint8, uint8, bool) {

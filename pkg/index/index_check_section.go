@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/park-jun-woo/silk/pkg/seg"
+	"github.com/geul-org/silk/pkg/seg"
 )
 
 // checkSection returns the section's live rows.

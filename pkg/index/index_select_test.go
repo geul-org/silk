@@ -7,7 +7,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/park-jun-woo/silk/pkg/seg"
+	"github.com/geul-org/silk/pkg/seg"
 )
 
 func TestIndexSelect(t *testing.T) {

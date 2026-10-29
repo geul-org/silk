@@ -2,7 +2,7 @@
 //ff:what segRows — rows of a section's runs and appended segments
 package cli
 
-import "github.com/park-jun-woo/silk/pkg/index"
+import "github.com/geul-org/silk/pkg/index"
 
 // segRows sums SegRef.Rows.
 func segRows(s index.Section) uint64 {

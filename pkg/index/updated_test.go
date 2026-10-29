@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/park-jun-woo/silk/pkg/archive"
+	"github.com/geul-org/silk/pkg/archive"
 )
 
 // updated fails t when the update fails.

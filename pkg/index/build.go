@@ -6,8 +6,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/park-jun-woo/silk/pkg/archive"
-	"github.com/park-jun-woo/silk/pkg/spec"
+	"github.com/geul-org/silk/pkg/archive"
+	"github.com/geul-org/silk/pkg/spec"
 )
 
 // Build replaces whatever dir held (old files are collected once no reader

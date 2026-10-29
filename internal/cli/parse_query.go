@@ -2,7 +2,7 @@
 //ff:what parseQuery — the -triple, -match and -label values as one Query (in that order)
 package cli
 
-import "github.com/park-jun-woo/silk/pkg/query"
+import "github.com/geul-org/silk/pkg/query"
 
 // parseQuery reads every condition; -label L is -match LABEL:2.0=@L.
 func parseQuery(f queryFlags) (query.Query, error) {

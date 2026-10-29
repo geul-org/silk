@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/park-jun-woo/silk/pkg/archive"
-	"github.com/park-jun-woo/silk/pkg/index"
-	"github.com/park-jun-woo/silk/pkg/query"
+	"github.com/geul-org/silk/pkg/archive"
+	"github.com/geul-org/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/query"
 )
 
 // runQuery answers -triple, -match and -label conditions over ARCHIVE's index.

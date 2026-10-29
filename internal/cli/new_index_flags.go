@@ -6,7 +6,7 @@ import (
 	"flag"
 	"io"
 
-	"github.com/park-jun-woo/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/index"
 )
 
 // newIndexFlags binds every index flag to f.

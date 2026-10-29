@@ -5,8 +5,8 @@ package index
 import (
 	"os"
 
-	"github.com/park-jun-woo/silk/pkg/seg"
-	"github.com/park-jun-woo/silk/pkg/spec"
+	"github.com/geul-org/silk/pkg/seg"
+	"github.com/geul-org/silk/pkg/spec"
 )
 
 // newIngest writes segment files under dir and names them through m.

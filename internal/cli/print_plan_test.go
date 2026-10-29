@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/park-jun-woo/silk/pkg/query"
+	"github.com/geul-org/silk/pkg/query"
 )
 
 func TestPrintPlan(t *testing.T) {

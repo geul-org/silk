@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/park-jun-woo/silk/internal/fixture"
+	"github.com/geul-org/silk/internal/fixture"
 )
 
 func TestIndexCompact(t *testing.T) {

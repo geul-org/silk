@@ -5,8 +5,8 @@ package index
 import (
 	"fmt"
 
-	"github.com/park-jun-woo/silk/pkg/seg"
-	"github.com/park-jun-woo/silk/pkg/spec"
+	"github.com/geul-org/silk/pkg/seg"
+	"github.com/geul-org/silk/pkg/spec"
 )
 
 // checkSeg compares f's footer with t.

@@ -1,4 +1,4 @@
-module github.com/park-jun-woo/silk
+module github.com/geul-org/silk
 
 go 1.25
 

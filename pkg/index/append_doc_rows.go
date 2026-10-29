@@ -5,7 +5,7 @@ package index
 import (
 	"encoding/binary"
 
-	"github.com/park-jun-woo/silk/pkg/seg"
+	"github.com/geul-org/silk/pkg/seg"
 )
 
 // appendDocRows frames b's records like ingest.doc.

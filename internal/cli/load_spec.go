@@ -3,8 +3,8 @@
 package cli
 
 import (
-	"github.com/park-jun-woo/silk/pkg/index"
-	"github.com/park-jun-woo/silk/pkg/spec"
+	"github.com/geul-org/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/spec"
 )
 
 // loadSpec picks the spec for build (keep false) or update (keep true).

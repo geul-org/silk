@@ -5,7 +5,7 @@ package index
 import (
 	"fmt"
 
-	"github.com/park-jun-woo/silk/pkg/archive"
+	"github.com/geul-org/silk/pkg/archive"
 )
 
 // checkSets compares the manifest's sets with a's.

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/park-jun-woo/silk/pkg/archive"
-	"github.com/park-jun-woo/silk/pkg/index"
-	"github.com/park-jun-woo/silk/pkg/query"
+	"github.com/geul-org/silk/pkg/archive"
+	"github.com/geul-org/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/query"
 )
 
 func TestExecQuery(t *testing.T) {

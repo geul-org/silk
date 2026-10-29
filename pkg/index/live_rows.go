@@ -2,7 +2,7 @@
 //ff:what liveRows — a segment's rows of live versions as full rows (partition slot first) appended to got, and its rows of dead versions counted
 package index
 
-import "github.com/park-jun-woo/silk/pkg/seg"
+import "github.com/geul-org/silk/pkg/seg"
 
 // liveRows reads f once.
 func liveRows(f *seg.File, live Bitmap, got []byte) ([]byte, uint64, error) {

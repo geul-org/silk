@@ -2,7 +2,7 @@
 //ff:what closeSegs — close every segment file of every section
 package index
 
-import "github.com/park-jun-woo/silk/pkg/seg"
+import "github.com/geul-org/silk/pkg/seg"
 
 // closeSegs ignores close errors (files are read-only).
 func closeSegs(ss [][]*seg.File) {

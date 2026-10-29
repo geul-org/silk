@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/park-jun-woo/silk/pkg/index"
-	"github.com/park-jun-woo/silk/pkg/spec"
+	"github.com/geul-org/silk/pkg/index"
+	"github.com/geul-org/silk/pkg/spec"
 )
 
 // planCond fails for a kind the index does not cover or a field path the

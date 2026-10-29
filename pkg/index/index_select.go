@@ -2,7 +2,7 @@
 //ff:what Index.Select — a selection over every segment of a section (binary search in runs, scan of appended segments), rows of dead versions skipped
 package index
 
-import "github.com/park-jun-woo/silk/pkg/seg"
+import "github.com/geul-org/silk/pkg/seg"
 
 // Select emits live (document, offset) pairs; the same record never appears
 // twice because a document version is indexed once.

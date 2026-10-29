@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/park-jun-woo/silk/pkg/query"
+	"github.com/geul-org/silk/pkg/query"
 )
 
 // printPlan writes `N. name [run|skip] detail`.

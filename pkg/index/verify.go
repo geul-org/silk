@@ -5,7 +5,7 @@ package index
 import (
 	"context"
 
-	"github.com/park-jun-woo/silk/pkg/archive"
+	"github.com/geul-org/silk/pkg/archive"
 )
 
 // Verify reads every live document again; it is as expensive as a build.

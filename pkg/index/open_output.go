@@ -5,7 +5,7 @@ package index
 import (
 	"path/filepath"
 
-	"github.com/park-jun-woo/silk/pkg/seg"
+	"github.com/geul-org/silk/pkg/seg"
 )
 
 // openOutput takes the TAG, widths and spec hash from an input's footer.
