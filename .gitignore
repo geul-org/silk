@@ -1,0 +1,19 @@
+# Build output
+/silk
+/cmd/silk/silk
+
+# Test and verification state (tsma)
+.tsma/
+tsma-results.jsonl
+session.json
+*.out
+*.test
+
+# Secrets
+.env*
+*.key
+*.pem
+
+# Local Go workspace (the parent draft/go.work is used)
+go.work
+go.work.sum
