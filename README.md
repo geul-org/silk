@@ -91,6 +91,5 @@ order lives in the map, not the documents. A per-record document-order map
 
 ## License
 
-The project's own work is dedicated to the public domain under
-[CC0 1.0](LICENSE). Third-party components keep their licenses; see
-[NOTICE](NOTICE).
+silk is released under the [MIT License](LICENSE). Third-party components keep
+their licenses; see [NOTICE](NOTICE).
