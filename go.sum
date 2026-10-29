@@ -1,0 +1,4 @@
+github.com/geul-org/gogeul v0.0.0-20261029110648-5e1a645142ca h1:zHpw3fWx/bRGAeyPm2NMHuCF9nhIfkR1xOb0ZsncgGg=
+github.com/geul-org/gogeul v0.0.0-20261029110648-5e1a645142ca/go.mod h1:Tk+96pdiRaY3fCBmbDPzHjs467785ed5+C45L3wbyVQ=
+github.com/klauspost/compress v1.20.3 h1:zWNoFqq/lSuYQRim3dUXlXeA0IqwuZGicdG5ZTfY5j4=
+github.com/klauspost/compress v1.20.3/go.mod h1:LUdAzn7YLVvxLpc7y3V1m40wESHTgc1422pwwBSKYuI=
