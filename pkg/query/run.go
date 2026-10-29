@@ -1,5 +1,5 @@
 //ff:func feature=query type=scanner control=iteration dimension=1
-//ff:what Run — scan each condition over every map, keep the documents meeting all of them, return results in document order
+//ff:what Run — follow a plan: each condition's documents, joined by document, as Results in (Issuer, document, version) order
 package query
 
 import (
@@ -7,22 +7,28 @@ import (
 	"fmt"
 
 	"github.com/park-jun-woo/silk/pkg/index"
-	"github.com/park-jun-woo/silk/pkg/scan"
 )
 
-// Run follows the plan for q over ix.
-func Run(ctx context.Context, ix *index.Index, q Query, o scan.Options) ([]Result, Stats, error) {
-	if len(q.Triples) == 0 {
+// Run answers p over ix.
+func Run(ctx context.Context, ix *index.Index, p Plan, threads int) ([]Result, Stats, error) {
+	if len(p.Conds) == 0 {
 		return nil, Stats{}, fmt.Errorf("%w: no condition", ErrSyntax)
 	}
-	var acc map[docKey][]uint64
-	st := Stats{Maps: len(ix.Parts)}
-	for i, t := range q.Triples {
-		hits, err := scanTriple(ctx, ix, t, o, &st)
+	var acc []docHit
+	var st Stats
+	for i, cp := range p.Conds {
+		if err := ctx.Err(); err != nil {
+			return nil, st, err
+		}
+		hs, err := runCond(ix, cp, threads, &st)
 		if err != nil {
 			return nil, st, err
 		}
-		acc = intersect(acc, hits, i == 0)
+		if i == 0 {
+			acc = hs
+		} else {
+			acc = joinDocs(acc, hs)
+		}
 	}
-	return toResults(acc), st, nil
+	return toResults(ix, acc), st, nil
 }

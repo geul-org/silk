@@ -1,17 +1,19 @@
 //ff:func feature=index type=reader control=iteration dimension=1
-//ff:what Index.Close — close every map and data pack file; the first error is returned
+//ff:what Index.Close — close segments and data packs and release the generation's pin
 package index
 
-// Close releases all parts.
+import "os"
+
+// Close releases ix.
 func (ix *Index) Close() error {
-	var first error
-	for _, p := range ix.Parts {
-		if err := p.Map.Close(); err != nil && first == nil {
-			first = err
-		}
-		if err := p.Data.Close(); err != nil && first == nil {
-			first = err
+	closeSegs(ix.Segs)
+	for _, f := range ix.packs {
+		if f != nil {
+			f.Close()
 		}
 	}
-	return first
+	if ix.pin != "" {
+		return os.Remove(ix.pin)
+	}
+	return nil
 }

@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what indexVerify — check the index against the archive and print how many maps passed
+//ff:what indexVerify — check the index against the archive and print what was checked
 package cli
 
 import (
@@ -18,10 +18,10 @@ func indexVerify(arch, dir string, stdout, stderr io.Writer) int {
 	if err != nil {
 		return fail(stderr, err)
 	}
-	n, err := index.Verify(ctx, a, dir)
+	r, err := index.Verify(ctx, a, dir)
 	if err != nil {
 		return fail(stderr, err)
 	}
-	fmt.Fprintf(stdout, "silk: %d maps ok\n", n)
+	fmt.Fprintf(stdout, "silk: generation %d ok: %d sections, %d segments, %d documents, %d rows\n", r.Generation, r.Sections, r.Segments, r.Docs, r.Rows)
 	return 0
 }

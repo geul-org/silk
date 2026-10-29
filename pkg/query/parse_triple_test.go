@@ -1,22 +1,22 @@
 //ff:func feature=query type=decoder control=iteration dimension=1
-//ff:what TestParseTriple — P106=Q169470 gives canonical records; wildcards allowed on one side; malformed conditions fail
+//ff:what TestParseTriple — Predicate (field 1) and Object (field 3) conditions, wildcards dropped; no '=', bad tokens or two wildcards fail
 package query
 
 import (
-	"bytes"
 	"errors"
+	"slices"
 	"testing"
 )
 
 func TestParseTriple(t *testing.T) {
-	tr, err := ParseTriple("P106 = Q169470")
-	if err != nil || !bytes.Equal(tr.Pred, []byte{0x00, 0xa8, 0x00, 0x6a}) || !bytes.Equal(tr.Obj, []byte{0x01, 0x20, 0x00, 0x02, 0x95, 0xfe}) {
-		t.Fatalf("%x %x %v", tr.Pred, tr.Obj, err)
+	c, err := ParseTriple("P106 = Q169470")
+	if err != nil || c.Name != "TRIPLE" || c.Codec != 0x0A || len(c.Fields) != 2 || !slices.Equal(c.Fields[1].Path, []int{3}) {
+		t.Fatal(c, err)
 	}
-	if tr, err := ParseTriple("P106=*"); err != nil || tr.Obj != nil {
-		t.Fatal(tr, err)
+	if c, _ := ParseTriple("*=Q5"); len(c.Fields) != 1 || c.Fields[0].Path[0] != 3 {
+		t.Fatal(c)
 	}
-	for _, s := range []string{"P106", "X1=Q2", "P1=Qx", "*=*"} {
+	for _, s := range []string{"P106", "X=Q5", "P1=X", "*=*"} {
 		if _, err := ParseTriple(s); !errors.Is(err, ErrSyntax) {
 			t.Fatal(s, err)
 		}

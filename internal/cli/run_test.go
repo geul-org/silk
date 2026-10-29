@@ -1,26 +1,26 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what TestRun — no arguments and unknown commands are usage errors; help prints usage; index and query dispatch
+//ff:what TestRun — help and dispatch: no arguments and unknown commands are usage errors (2), help is 0
 package cli
 
 import (
-	"bytes"
 	"strings"
 	"testing"
 )
 
 func TestRun(t *testing.T) {
-	var out, errb bytes.Buffer
-	if Run(nil, &out, &errb) != 2 || !strings.Contains(errb.String(), "Usage") {
-		t.Fatal(errb.String())
+	if code, _, e := call(""); code != 2 || !strings.Contains(e, "Usage") {
+		t.Fatal(code)
 	}
-	if Run([]string{"nope"}, &out, &errb) != 2 {
-		t.Fatal("unknown")
+	if code, o, _ := call("help"); code != 0 || !strings.Contains(o, "silk index build") {
+		t.Fatal(code)
 	}
-	out.Reset()
-	if Run([]string{"help"}, &out, &errb) != 0 || !strings.Contains(out.String(), "silk index build") {
-		t.Fatal(out.String())
+	if code, _, _ := call("nope"); code != 2 {
+		t.Fatal(code)
 	}
-	if Run([]string{"index"}, &out, &errb) != 2 || Run([]string{"query"}, &out, &errb) != 2 {
-		t.Fatal("dispatch")
+	if code, _, _ := call("index"); code != 2 {
+		t.Fatal(code)
+	}
+	if code, _, _ := call("query"); code != 2 {
+		t.Fatal(code)
 	}
 }

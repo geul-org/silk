@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=iteration dimension=1
-//ff:what execQuery — run a query and print each document path with its Edge Ids (unless -count), then counts and time
+//ff:what execQuery — run a plan and print each document path with its Edge Ids (unless -count), then counts and time
 package cli
 
 import (
@@ -10,13 +10,12 @@ import (
 
 	"github.com/park-jun-woo/silk/pkg/index"
 	"github.com/park-jun-woo/silk/pkg/query"
-	"github.com/park-jun-woo/silk/pkg/scan"
 )
 
 // execQuery prints `<path> #e1,#e2` lines and a summary on stderr.
-func execQuery(ctx context.Context, ix *index.Index, q query.Query, o scan.Options, count bool, stdout, stderr io.Writer) int {
+func execQuery(ctx context.Context, ix *index.Index, p query.Plan, threads int, count bool, stdout, stderr io.Writer) int {
 	t0 := time.Now()
-	rs, st, err := query.Run(ctx, ix, q, o)
+	rs, st, err := query.Run(ctx, ix, p, threads)
 	if err != nil {
 		return fail(stderr, err)
 	}
@@ -31,7 +30,7 @@ func execQuery(ctx context.Context, ix *index.Index, q query.Query, o scan.Optio
 	if count {
 		fmt.Fprintf(stdout, "%d documents, %d statements\n", len(rs), edges)
 	}
-	fmt.Fprintf(stderr, "silk: %d documents, %d statements; %d maps, %d TRIPLEs scanned, %d hits; %v\n",
-		len(rs), edges, st.Maps, st.Scanned, st.Hits, el.Round(time.Microsecond))
+	fmt.Fprintf(stderr, "silk: %d documents, %d statements; %d segments, %d rows examined, %d dead skipped, %d candidates, %d verified; %v\n",
+		len(rs), edges, st.Segments, st.Rows, st.Dead, st.Candidates, st.Verified, el.Round(time.Microsecond))
 	return 0
 }

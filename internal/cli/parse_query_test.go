@@ -1,15 +1,18 @@
 //ff:func feature=cli type=helper control=sequence
-//ff:what TestParseQuery — every condition parsed in order; one bad condition fails
+//ff:what TestParseQuery — triples, matches and labels in that order; a bad triple or match fails
 package cli
 
 import "testing"
 
 func TestParseQuery(t *testing.T) {
-	q, err := parseQuery([]string{"P106=Q169470", "P31=Q5"})
-	if err != nil || len(q.Triples) != 2 || q.Triples[1].Text != "P31=Q5" {
-		t.Fatal(q, err)
+	q, err := parseQuery(queryFlags{triples: triples{"P31=Q5"}, matches: triples{"SOURCE:2=#1"}, labels: triples{"ko"}})
+	if err != nil || len(q.Conds) != 3 || q.Conds[1].Name != "SOURCE" || q.Conds[2].Name != "LABEL" {
+		t.Fatal(err, q)
 	}
-	if _, err := parseQuery([]string{"P1=Q2", "bad"}); err == nil {
-		t.Fatal("bad")
+	if _, err := parseQuery(queryFlags{triples: triples{"x"}}); err == nil {
+		t.Fatal("bad triple")
+	}
+	if _, err := parseQuery(queryFlags{matches: triples{"x"}}); err == nil {
+		t.Fatal("bad match")
 	}
 }

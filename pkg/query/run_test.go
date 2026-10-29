@@ -1,32 +1,37 @@
-//ff:func feature=query type=scanner control=sequence
-//ff:what TestRun — physicists in the fixture (two documents), conjunctions narrow, empty queries and scan errors fail
+//ff:func feature=query type=scanner control=iteration dimension=1
+//ff:what TestRun — single and joined conditions over table and other partitions give the same documents; no condition, a cancelled context and a failing condition fail
 package query
 
 import (
 	"context"
 	"errors"
+	"slices"
 	"testing"
-
-	"github.com/park-jun-woo/silk/pkg/scan"
 )
 
 func TestRun(t *testing.T) {
-	ix := fixtureIndex(t)
 	ctx := context.Background()
-	rs, st, err := Run(ctx, ix, Query{Triples: []Triple{mustTriple(t, "P106=Q169470")}}, scan.Options{})
-	if err != nil || len(rs) != 2 || rs[0].Doc != 0x5100000000001d52 || rs[1].Edges[0] != 2 || st.Maps != 1 || st.Hits != 2 {
-		t.Fatal(rs, st, err)
+	want := []string{"0x00010000/0x5100000000001d52/0x00000001.geul [15 5]", "0x00010000/0x5100000000001d82/0x00000001.geul [28 2]"}
+	for _, min := range []int{1, 256} {
+		ix := testIndex(t, min)
+		p, _ := NewPlan(ix, Query{Conds: []Cond{condOf(t, "P31=Q5"), condOf(t, "P106=Q169470")}}, 2)
+		rs, st, err := Run(ctx, ix, p, 2)
+		if err != nil || !slices.Equal(pathsOf(rs), want) || st.Verified != 4 {
+			t.Fatal(min, err, pathsOf(rs))
+		}
 	}
-	both := Query{Triples: []Triple{mustTriple(t, "P106=Q169470"), mustTriple(t, "P31=Q5")}}
-	if rs, _, err := Run(ctx, ix, both, scan.Options{}); err != nil || len(rs) != 2 || len(rs[0].Edges) != 2 {
-		t.Fatal(rs, err)
-	}
-	if _, _, err := Run(ctx, ix, Query{}, scan.Options{}); !errors.Is(err, ErrSyntax) {
+	ix := testIndex(t, 1)
+	if _, _, err := Run(ctx, ix, Plan{}, 1); !errors.Is(err, ErrSyntax) {
 		t.Fatal(err)
 	}
-	cancel, stop := context.WithCancel(ctx)
-	stop()
-	if _, _, err := Run(cancel, ix, both, scan.Options{}); !errors.Is(err, context.Canceled) {
+	p, _ := NewPlan(ix, Query{Conds: []Cond{condOf(t, "P31=Q5")}}, 1)
+	cctx, cancel := context.WithCancel(ctx)
+	cancel()
+	if _, _, err := Run(cctx, ix, p, 1); !errors.Is(err, context.Canceled) {
 		t.Fatal(err)
+	}
+	p.Conds[0].Cond.Codec = 0x0B
+	if _, _, err := Run(ctx, ix, p, 1); err == nil {
+		t.Fatal("failing condition")
 	}
 }

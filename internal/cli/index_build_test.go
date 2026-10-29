@@ -1,29 +1,28 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what TestIndexBuild — prints one map line and a summary; a plain tree and an unwritable index fail
+//ff:what TestIndexBuild — builds and reports; a bad spec file, a non-archive and a locked index fail
 package cli
 
 import (
-	"bytes"
+	"io"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
-
-	"github.com/park-jun-woo/silk/internal/fixture"
 )
 
 func TestIndexBuild(t *testing.T) {
-	dir := fixture.Packed(t, nil)
-	var out, errb bytes.Buffer
-	if indexBuild(dir, filepath.Join(dir, ".silk"), &out, &errb) != 0 || !strings.Contains(out.String(), "0x00010000") || !strings.Contains(errb.String(), "1 maps, 4 documents") {
-		t.Fatal(out.String(), errb.String())
+	data := fixturePacked(t)
+	dir := filepath.Join(data, ".silk")
+	if code := indexBuild(data, dir, indexFlags{}, io.Discard, io.Discard); code != 0 {
+		t.Fatal(code)
 	}
-	if indexBuild(fixture.Source(), t.TempDir(), &out, &errb) != 1 {
-		t.Fatal("plain tree")
+	if code := indexBuild(data, dir, indexFlags{spec: "/nonexistent"}, io.Discard, io.Discard); code != 1 {
+		t.Fatal("spec", code)
 	}
-	f := filepath.Join(t.TempDir(), "f")
-	os.WriteFile(f, nil, 0o644)
-	if indexBuild(dir, filepath.Join(f, "idx"), &out, &errb) != 1 {
-		t.Fatal("unwritable")
+	if code := indexBuild(t.TempDir(), dir, indexFlags{}, io.Discard, io.Discard); code != 1 {
+		t.Fatal("archive", code)
+	}
+	os.WriteFile(filepath.Join(dir, "LOCK"), []byte("1\n"), 0o644)
+	if code := indexBuild(data, dir, indexFlags{}, io.Discard, io.Discard); code != 1 {
+		t.Fatal("locked", code)
 	}
 }

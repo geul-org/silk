@@ -1,5 +1,5 @@
 //ff:func feature=query type=encoder control=selection
-//ff:what encodeToken — Qn, Pn or #n as the canonical bytes of a WIKIDATA-QID, WIKIDATA-PID or LOCAL Reference record; * is nil (any)
+//ff:what encodeToken — Qn, Pn, #n (Reference records), @tag (a LANGUAGE-BCP47-CODE record) or 0x<hex> (one record as is) as canonical record bytes; * is nil (any)
 //ff:why gogeul notation reads these tokens but keeps parseRecord unexported; an exported token reader is a candidate for gogeul.
 package query
 
@@ -19,6 +19,10 @@ func encodeToken(tok string) ([]byte, error) {
 		return nil, nil
 	case tok == "":
 		return nil, fmt.Errorf("%w: empty token", ErrSyntax)
+	case tok[0] == '@':
+		return encodeLang(tok[1:])
+	case len(tok) > 2 && tok[:2] == "0x":
+		return encodeHex(tok[2:])
 	case tok[0] == 'Q':
 		c = core.RefWikidataQID
 	case tok[0] == 'P':
@@ -26,7 +30,7 @@ func encodeToken(tok string) ([]byte, error) {
 	case tok[0] == '#':
 		c = core.RefLocal
 	default:
-		return nil, fmt.Errorf("%w: %q is not Qn, Pn, #n or *", ErrSyntax, tok)
+		return nil, fmt.Errorf("%w: %q is not Qn, Pn, #n, @tag, 0x<hex> or *", ErrSyntax, tok)
 	}
 	n, err := strconv.ParseUint(tok[1:], 10, 64)
 	if err != nil {

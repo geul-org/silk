@@ -1,25 +1,19 @@
 //ff:func feature=index type=reader control=sequence
-//ff:what TestIndexClose — closes every part; a closed map or a closed data file is reported
+//ff:what TestIndexClose — data packs and segments closed and the pin removed; an index without a pin closes quietly
 package index
 
 import (
-	"context"
 	"testing"
 )
 
 func TestIndexClose(t *testing.T) {
-	a, dir := fixtureArchive(t)
-	Build(context.Background(), a, dir)
+	a, _, dir := built(t)
 	ix, _ := Open(a, dir)
-	if err := ix.Close(); err != nil {
+	ix.Record(0, 0)
+	if err := ix.Close(); err != nil || len(pinnedGens(dir)) != 0 {
 		t.Fatal(err)
 	}
-	if err := ix.Close(); err == nil {
-		t.Fatal("closed map must fail")
-	}
-	ix2, _ := Open(a, dir)
-	ix2.Parts[0].Data.Close()
-	if err := ix2.Close(); err == nil {
-		t.Fatal("closed data file must fail")
+	if err := (&Index{}).Close(); err != nil {
+		t.Fatal(err)
 	}
 }

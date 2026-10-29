@@ -1,29 +1,24 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what TestIndexVerify — a built index passes; a plain tree and a missing index fail
+//ff:what TestIndexVerify — a built index verifies; a non-archive or a missing index fails
 package cli
 
 import (
-	"bytes"
+	"io"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/park-jun-woo/silk/internal/fixture"
 )
 
 func TestIndexVerify(t *testing.T) {
-	dir := fixture.Packed(t, nil)
-	idx := filepath.Join(dir, ".silk")
-	var out, errb bytes.Buffer
-	indexBuild(dir, idx, &out, &errb)
-	out.Reset()
-	if indexVerify(dir, idx, &out, &errb) != 0 || !strings.Contains(out.String(), "1 maps ok") {
-		t.Fatal(out.String(), errb.String())
+	data := packedIndex(t)
+	var o strings.Builder
+	if code := indexVerify(data, filepath.Join(data, ".silk"), &o, io.Discard); code != 0 || !strings.Contains(o.String(), "4 documents") {
+		t.Fatal(code, o.String())
 	}
-	if indexVerify(fixture.Source(), idx, &out, &errb) != 1 {
-		t.Fatal("plain tree")
+	if code := indexVerify(t.TempDir(), filepath.Join(data, ".silk"), io.Discard, io.Discard); code != 1 {
+		t.Fatal(code)
 	}
-	if indexVerify(dir, t.TempDir(), &out, &errb) != 1 {
-		t.Fatal("no index")
+	if code := indexVerify(data, t.TempDir(), io.Discard, io.Discard); code != 1 {
+		t.Fatal(code)
 	}
 }

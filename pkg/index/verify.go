@@ -1,34 +1,40 @@
-//ff:func feature=index type=rule control=sequence
-//ff:what Verify — the catalog matches the archive, lists exactly the maps it needs, and each map matches its pack; the number checked
+//ff:func feature=index type=rule control=iteration dimension=1
+//ff:what Verify — check an index against its archive: sets, every segment (hash, order, footer against the spec), the live documents, each section's live rows against rows rebuilt from the documents, and dead counts
 package index
 
 import (
 	"context"
-	"fmt"
-	"slices"
 
 	"github.com/park-jun-woo/silk/pkg/archive"
 )
 
-// Verify checks the catalog (checkSets) and each target's map (verifyOne).
-func Verify(ctx context.Context, a *archive.Archive, dir string) (int, error) {
-	c, err := readCatalog(dir)
+// Verify reads every live document again; it is as expensive as a build.
+func Verify(ctx context.Context, a *archive.Archive, dir string) (VerifyReport, error) {
+	ix, err := Open(a, dir)
 	if err != nil {
-		return 0, err
+		return VerifyReport{}, err
 	}
-	if err := checkSets(a, c); err != nil {
-		return 0, err
-	}
-	var rels []string
-	err = eachTarget(ctx, a, func(t Target) error {
-		rels = append(rels, mapRel(t))
-		return verifyOne(mapPath(dir, mapRel(t)), t)
-	})
+	defer ix.Close()
+	docs, err := liveDocs(ctx, a)
 	if err != nil {
-		return 0, err
+		return VerifyReport{}, err
 	}
-	if !slices.Equal(rels, c.Maps) {
-		return 0, fmt.Errorf("%w: catalog lists %d maps, archive needs %d", ErrStale, len(c.Maps), len(rels))
+	seqs, err := ix.checkLive(docs)
+	if err != nil {
+		return VerifyReport{}, err
 	}
-	return len(rels), nil
+	want, err := expectRows(ix, docs, seqs)
+	if err != nil {
+		return VerifyReport{}, err
+	}
+	rep := VerifyReport{Generation: ix.M.Generation, Sections: len(ix.M.Sections), Docs: len(docs)}
+	for i := range ix.M.Sections {
+		n, err := ix.checkSection(i, want[i])
+		if err != nil {
+			return rep, err
+		}
+		rep.Segments += len(ix.Segs[i])
+		rep.Rows += n
+	}
+	return rep, nil
 }

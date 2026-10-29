@@ -1,17 +1,18 @@
 //ff:func feature=query type=builder control=sequence
-//ff:what TestToResults — sorted by Issuer, then document, then version
+//ff:what TestToResults — results named through the document table, sorted by Issuer, document and version
 package query
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/park-jun-woo/silk/pkg/index"
+)
 
 func TestToResults(t *testing.T) {
-	rs := toResults(map[docKey][]uint64{
-		{issuer: "0x0002", doc: 1, version: 1}: {1},
-		{issuer: "0x0001", doc: 5, version: 2}: {2},
-		{issuer: "0x0001", doc: 5, version: 1}: {3},
-		{issuer: "0x0001", doc: 3, version: 9}: {4},
-	})
-	if len(rs) != 4 || rs[0].Edges[0] != 4 || rs[1].Edges[0] != 3 || rs[2].Edges[0] != 2 || rs[3].Issuer != "0x0002" {
+	ix := &index.Index{M: index.Manifest{Issuers: []string{"0x0002", "0x0001"}},
+		Docs: []index.DocEntry{{Issuer: 0, ID: 1, Version: 1}, {Issuer: 1, ID: 2, Version: 2}, {Issuer: 1, ID: 2, Version: 1}, {Issuer: 1, ID: 1, Version: 1}}}
+	rs := toResults(ix, []docHit{{0, []uint64{1}}, {1, nil}, {2, nil}, {3, nil}})
+	if rs[0].Doc != 1 || rs[1].Version != 1 || rs[2].Version != 2 || rs[3].Issuer != "0x0002" || rs[3].Edges[0] != 1 {
 		t.Fatal(rs)
 	}
 }

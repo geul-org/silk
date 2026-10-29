@@ -1,40 +1,52 @@
 //ff:func feature=index type=rule control=sequence
-//ff:what TestVerify — a built index verifies; missing catalog, moved sets, broken maps and extra catalog entries fail
+//ff:what TestVerify — a built index verifies; no index, an unreadable archive, a wrong bitmap, a damaged document and a damaged segment fail
 package index
 
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
-
-	"github.com/park-jun-woo/silk/pkg/archive"
 )
 
 func TestVerify(t *testing.T) {
 	ctx := context.Background()
-	a, dir := fixtureArchive(t)
-	if _, err := Verify(ctx, a, dir); !errors.Is(err, ErrStale) {
+	a, _, dir := built(t)
+	r, err := Verify(ctx, a, dir)
+	if err != nil || r.Docs != 4 || r.Sections != 7 || r.Segments != 7 || r.Rows == 0 {
+		t.Fatal(err, r)
+	}
+	if _, err := Verify(ctx, a, t.TempDir()); !errors.Is(err, ErrNoIndex) {
 		t.Fatal(err)
 	}
-	Build(ctx, a, dir)
-	if n, err := Verify(ctx, a, dir); err != nil || n != 1 {
-		t.Fatal(n, err)
-	}
-	moved := &archive.Archive{Sets: append([]archive.Set{}, a.Sets...)}
-	moved.Sets[0].Generation = 2
-	if _, err := Verify(ctx, moved, dir); !errors.Is(err, ErrStale) {
+	m, _ := CurrentManifest(dir)
+	live, _ := readBitmap(filepath.Join(dir, m.Live))
+	live.Put(1, false)
+	os.WriteFile(filepath.Join(dir, m.Live), encodeBitmap(live), 0o644)
+	if _, err := Verify(ctx, a, dir); !errors.Is(err, ErrMismatch) {
 		t.Fatal(err)
 	}
-	c, _ := readCatalog(dir)
-	c.Maps = append(c.Maps, "0x0009/x.srm")
-	writeCatalog(dir, c)
-	if _, err := Verify(ctx, a, dir); !errors.Is(err, ErrStale) {
-		t.Fatal(err)
+	a2, _, dir2 := built(t)
+	segFile := filepath.Join(dir2, firstSeg(dir2))
+	b, _ := os.ReadFile(segFile)
+	b[0] ^= 1
+	os.WriteFile(segFile, b, 0o644)
+	if _, err := Verify(ctx, a2, dir2); err == nil {
+		t.Fatal("damaged segment")
 	}
-	c.Maps = c.Maps[:1]
-	writeCatalog(dir, c)
-	removeStale(dir, nil)
-	if _, err := Verify(ctx, a, dir); err == nil {
-		t.Fatal("missing map")
+	a3, _, dir3 := built(t)
+	ix, _ := Open(a3, dir3)
+	pack, off := ix.paths[0], ix.Docs[0].Off
+	ix.Close()
+	f, _ := os.OpenFile(pack, os.O_WRONLY, 0)
+	f.WriteAt([]byte{0xff, 0xff}, int64(off))
+	f.Close()
+	if _, err := Verify(ctx, a3, dir3); !errors.Is(err, ErrFormat) {
+		t.Fatal("damaged document", err)
+	}
+	os.Remove(filepath.Join(a3.Sets[0].Dir, "m", a3.Sets[0].Manifest+".gpm"))
+	if _, err := Verify(ctx, a3, dir3); err == nil {
+		t.Fatal("unreadable archive")
 	}
 }

@@ -1,35 +1,45 @@
 //ff:func feature=index type=builder control=sequence
-//ff:what Build — write the record map of every data pack and Issuer of an archive, then the catalog, then drop maps no longer listed
+//ff:what Build — index every live document of an archive from scratch: sorted runs per tag (merged into one), document table, live bitmap, a new generation
 package index
 
 import (
 	"context"
-	"os"
+	"time"
 
 	"github.com/park-jun-woo/silk/pkg/archive"
-	"github.com/park-jun-woo/silk/pkg/recmap"
+	"github.com/park-jun-woo/silk/pkg/spec"
 )
 
-// Build makes each map (buildOne) and returns their headers in build order.
-// The catalog is written after every map, so a failed build leaves the
-// previous catalog (whose maps may now be gone: Open then fails, not lies).
-func Build(ctx context.Context, a *archive.Archive, dir string) ([]recmap.Header, error) {
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return nil, err
+// Build replaces whatever dir held (old files are collected once no reader
+// pins them). Rows are written in batches of o.Batch per tag and merged.
+func Build(ctx context.Context, a *archive.Archive, dir string, sp spec.Spec, o Options) (Report, error) {
+	t0 := time.Now()
+	if err := sp.Validate(); err != nil {
+		return Report{}, err
 	}
-	var out []recmap.Header
-	var rels []string
-	err := eachTarget(ctx, a, func(t Target) error {
-		h, err := buildOne(mapPath(dir, mapRel(t)), t)
-		out = append(out, h)
-		rels = append(rels, mapRel(t))
-		return err
-	})
+	unlock, err := lockDir(dir)
 	if err != nil {
-		return nil, err
+		return Report{}, err
 	}
-	if err := writeCatalog(dir, newCatalog(a, rels)); err != nil {
-		return nil, err
+	defer unlock()
+	docs, err := liveDocs(ctx, a)
+	if err != nil {
+		return Report{}, err
 	}
-	return out, removeStale(dir, rels)
+	m := startManifest(dir)
+	g := newIngest(dir, &m, sp, fill(len(sp.Tags), true), o.batch())
+	entries, err := addDocs(g, docs, 0)
+	if err != nil {
+		return Report{}, err
+	}
+	if err := g.flush(); err != nil {
+		return Report{}, err
+	}
+	m.Sections = nextSections(nil, sp, fill(len(sp.Tags), true), g.out)
+	live := allLive(uint32(len(entries)))
+	rep := Report{Docs: len(entries), New: len(entries), NewBytes: g.read, Read: g.read, Written: g.written}
+	if err := writeGeneration(dir, &m, sp, a, entries, live, &rep); err != nil {
+		return rep, err
+	}
+	return finishWriter(ctx, dir, &m, Options{Threads: o.Threads, Full: true, Pause: o.Pause}, rep, t0)
 }

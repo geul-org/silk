@@ -8,4 +8,5 @@ import "testing"
 type recorder struct {
 	*testing.T
 	failed bool
+	tmp    string
 }

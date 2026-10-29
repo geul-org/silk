@@ -1,34 +1,29 @@
 //ff:func feature=index type=reader control=sequence
-//ff:what TestOpen — a built index opens with one part; no catalog, moved sets and a broken listed map fail
+//ff:what TestOpen — a built index opens pinned at its generation; no index, or an archive that moved on, fails and leaves no pin
 package index
 
 import (
-	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
-
-	"github.com/park-jun-woo/silk/pkg/archive"
 )
 
 func TestOpen(t *testing.T) {
-	a, dir := fixtureArchive(t)
-	if _, err := Open(a, dir); !errors.Is(err, ErrStale) {
-		t.Fatal(err)
-	}
-	Build(context.Background(), a, dir)
+	a, data, dir := built(t)
 	ix, err := Open(a, dir)
-	if err != nil || len(ix.Parts) != 1 || ix.Parts[0].Map.Header.Docs != 4 {
-		t.Fatal(ix, err)
+	if err != nil || ix.M.Generation == 0 || len(ix.Docs) != 4 || ix.Live.Count() != 4 || len(ix.Segs) != 7 {
+		t.Fatal(err)
 	}
 	ix.Close()
-	moved := &archive.Archive{Sets: []archive.Set{{Name: "0x00010000", Generation: 2}}}
-	if _, err := Open(moved, dir); !errors.Is(err, ErrStale) {
+	if _, err := Open(a, t.TempDir()); !errors.Is(err, ErrNoIndex) {
 		t.Fatal(err)
 	}
-	c, _ := readCatalog(dir)
-	c.Maps = append(c.Maps, "0x0009/x.srm")
-	writeCatalog(dir, c)
-	if _, err := Open(a, dir); err == nil {
-		t.Fatal("missing listed map")
+	b := evolved(t, data)
+	if _, err := Open(b, dir); !errors.Is(err, ErrStale) {
+		t.Fatal(err)
+	}
+	if es, _ := os.ReadDir(filepath.Join(dir, dirPin)); len(es) != 0 {
+		t.Fatal("pin left behind")
 	}
 }

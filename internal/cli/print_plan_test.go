@@ -3,16 +3,16 @@
 package cli
 
 import (
-	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/park-jun-woo/silk/pkg/query"
 )
 
 func TestPrintPlan(t *testing.T) {
-	var out bytes.Buffer
-	printPlan(&out, query.Plan{Steps: []query.Step{{Name: "a", Detail: "x"}, {Name: "b", Active: true, Detail: "y"}}})
-	if out.String() != "1. a [skip] x\n2. b [run] y\n" {
-		t.Fatal(out.String())
+	var b strings.Builder
+	printPlan(&b, query.Plan{Steps: []query.Step{{Name: "a", Detail: "x"}, {Name: "b", Active: true, Detail: "y"}}})
+	if b.String() != "1. a [skip] x\n2. b [run] y\n" {
+		t.Fatal(b.String())
 	}
 }

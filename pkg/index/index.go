@@ -1,9 +1,26 @@
 //ff:type feature=index type=model
-//ff:what Index — the opened maps of an index directory, each with its data pack
+//ff:what Index — an opened, pinned index generation: manifest, spec, document table, live bitmap, segment files per section, data packs (opened on demand)
 package index
 
-// Index is what Open returns; Close releases its files.
+import (
+	"os"
+	"sync"
+
+	"github.com/park-jun-woo/silk/pkg/seg"
+	"github.com/park-jun-woo/silk/pkg/spec"
+)
+
+// Index is what Open returns. Its generation stays readable until Close,
+// even when a writer commits newer ones.
 type Index struct {
 	Dir   string
-	Parts []Part
+	M     Manifest
+	Spec  spec.Spec
+	Docs  []DocEntry
+	Live  Bitmap
+	Segs  [][]*seg.File
+	paths []string
+	mu    sync.Mutex
+	packs []*os.File
+	pin   string
 }

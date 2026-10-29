@@ -1,38 +1,38 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what TestExecQuery — result lines or counts plus a stderr summary; a failing run is exit 1
+//ff:what TestExecQuery — result lines or counts and a summary; a cancelled context fails
 package cli
 
 import (
-	"bytes"
 	"context"
+	"io"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/park-jun-woo/silk/internal/fixture"
 	"github.com/park-jun-woo/silk/pkg/archive"
 	"github.com/park-jun-woo/silk/pkg/index"
 	"github.com/park-jun-woo/silk/pkg/query"
-	"github.com/park-jun-woo/silk/pkg/scan"
 )
 
 func TestExecQuery(t *testing.T) {
+	data := packedIndex(t)
 	ctx := context.Background()
-	a, _ := archive.Open(ctx, fixture.Packed(t, nil))
-	dir := filepath.Join(t.TempDir(), "idx")
-	index.Build(ctx, a, dir)
-	ix, _ := index.Open(a, dir)
+	a, _ := archive.Open(ctx, data)
+	ix, _ := index.Open(a, filepath.Join(data, ".silk"))
 	defer ix.Close()
-	q, _ := parseQuery([]string{"P31=Q5"})
-	var out, errb bytes.Buffer
-	if execQuery(ctx, ix, q, scan.Options{}, false, &out, &errb) != 0 || strings.Count(out.String(), "\n") != 2 || !strings.Contains(errb.String(), "2 documents, 2 statements") {
-		t.Fatal(out.String(), errb.String())
+	c, _ := query.ParseTriple("P31=Q5")
+	p, _ := query.NewPlan(ix, query.Query{Conds: []query.Cond{c}}, 1)
+	var o, e strings.Builder
+	if code := execQuery(ctx, ix, p, 1, false, &o, &e); code != 0 || !strings.Contains(o.String(), "#15") || !strings.Contains(e.String(), "2 verified") {
+		t.Fatal(code, o.String())
 	}
-	out.Reset()
-	if execQuery(ctx, ix, q, scan.Options{}, true, &out, &errb) != 0 || out.String() != "2 documents, 2 statements\n" {
-		t.Fatal(out.String())
+	o.Reset()
+	if code := execQuery(ctx, ix, p, 1, true, &o, io.Discard); code != 0 || o.String() != "2 documents, 2 statements\n" {
+		t.Fatal(code, o.String())
 	}
-	if execQuery(ctx, ix, query.Query{}, scan.Options{}, false, &out, &errb) != 1 {
-		t.Fatal("empty query")
+	cctx, cancel := context.WithCancel(ctx)
+	cancel()
+	if code := execQuery(cctx, ix, p, 1, false, io.Discard, io.Discard); code != 1 {
+		t.Fatal(code)
 	}
 }

@@ -1,38 +1,32 @@
-//ff:func feature=cli type=command control=sequence
-//ff:what TestRunQuery — results, counts and plan print; usage, bad conditions, plain trees and missing indexes fail
+//ff:func feature=cli type=command control=iteration dimension=1
+//ff:what TestRunQuery — results, counts and plans; usage errors (2) and failing conditions, archives, indexes and plans (1)
 package cli
 
 import (
-	"bytes"
 	"strings"
 	"testing"
-
-	"github.com/park-jun-woo/silk/internal/fixture"
 )
 
 func TestRunQuery(t *testing.T) {
-	dir := fixture.Packed(t, nil)
-	var out, errb bytes.Buffer
-	if runQuery([]string{"-triple", "P106=Q169470", dir}, &out, &errb) != 1 {
-		t.Fatal("no index yet")
+	data := packedIndex(t)
+	if code, o, _ := call("query -triple P106=Q169470 " + data); code != 0 || strings.Count(o, "\n") != 2 {
+		t.Fatal(code, o)
 	}
-	Run([]string{"index", "build", dir}, &out, &errb)
-	out.Reset()
-	if runQuery([]string{"-triple", "P106=Q169470", dir}, &out, &errb) != 0 || strings.Count(out.String(), "\n") != 2 || !strings.Contains(out.String(), "0x5100000000001d82/0x00000001.geul #2") {
-		t.Fatal(out.String(), errb.String())
+	if code, o, _ := call("query -count -label de -match LABEL:1=Q7554 " + data); code != 0 || o != "1 documents, 31 statements\n" {
+		t.Fatal(code, o)
 	}
-	out.Reset()
-	if runQuery([]string{"-count", "-threads", "2", "-triple", "P106=Q169470", "-triple", "P31=Q5", dir}, &out, &errb) != 0 || out.String() != "2 documents, 4 statements\n" {
-		t.Fatal(out.String())
+	if code, o, _ := call("query -explain -triple P31=Q5 " + data); code != 0 || !strings.Contains(o, "segment lookup") {
+		t.Fatal(code, o)
 	}
-	out.Reset()
-	if runQuery([]string{"-explain", "-triple", "P106=Q169470", dir}, &out, &errb) != 0 || !strings.Contains(out.String(), "[skip]") {
-		t.Fatal(out.String())
-	}
-	if runQuery([]string{dir}, &out, &errb) != 2 || runQuery([]string{"-triple", "x", dir}, &out, &errb) != 1 {
-		t.Fatal("usage, syntax")
-	}
-	if runQuery([]string{"-triple", "P106=Q169470", fixture.Source()}, &out, &errb) != 1 {
-		t.Fatal("plain tree")
+	for args, want := range map[string]int{
+		"query " + data:                                    2,
+		"query -triple X=1 " + data:                        1,
+		"query -triple P31=Q5 " + t.TempDir():              1,
+		"query -index /nonexistent -triple P31=Q5 " + data: 1,
+		"query -match LABEL:5=Q1 " + data:                  1,
+	} {
+		if code, _, _ := call(args); code != want {
+			t.Fatal(args, code)
+		}
 	}
 }

@@ -1,5 +1,5 @@
 //ff:type feature=query type=model
-//ff:what Result — one version document meeting every condition, with the Edge Ids of its matching TRIPLEs
+//ff:what Result — one version document meeting every condition, with the Edge Ids of its matching records
 package query
 
 // Result names `<Issuer>/<Doc>/<Version>.geul` and the matching Edge Ids
