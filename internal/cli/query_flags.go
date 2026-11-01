@@ -1,5 +1,5 @@
 //ff:type feature=cli type=model
-//ff:what queryFlags — the flags of `silk query`: index directory, threads, output mode, conditions in the order given
+//ff:what queryFlags — the flags of `silkg query`: index directory, threads, output mode, conditions in the order given
 package cli
 
 // queryFlags holds parsed values.

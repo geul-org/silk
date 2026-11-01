@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=selection
-//ff:what Run — dispatch `silk index …`, `silk query …` and help; the process exit code (0 ok, 1 failure, 2 usage)
+//ff:what Run — dispatch `silkg index …`, `silkg query …` and help; the process exit code (0 ok, 1 failure, 2 usage)
 package cli
 
 import (
@@ -7,7 +7,7 @@ import (
 	"io"
 )
 
-// Run executes one silk command line (without the program name).
+// Run executes one silkg command line (without the program name).
 func Run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
 		fmt.Fprint(stderr, usageText)
@@ -22,7 +22,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprint(stdout, usageText)
 		return 0
 	default:
-		fmt.Fprintf(stderr, "silk: unknown command %q\n\n%s", args[0], usageText)
+		fmt.Fprintf(stderr, "silkg: unknown command %q\n\n%s", args[0], usageText)
 		return 2
 	}
 }

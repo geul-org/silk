@@ -13,7 +13,7 @@ func TestMainEntry(t *testing.T) {
 	defer func() { exit = os.Exit }()
 	args := os.Args
 	defer func() { os.Args = args }()
-	os.Args = []string{"silk", "nope"}
+	os.Args = []string{"silkg", "nope"}
 	main()
 	if code != 2 {
 		t.Fatal(code)

@@ -13,8 +13,10 @@ change before a first release.
 ## Install
 
 ```sh
-go install github.com/geul-org/silk/cmd/silk@latest
+go install github.com/geul-org/silk/cmd/silkg@latest
 ```
+
+The command is `silkg`.
 
 SILK reads GEUL pack archives through
 [gogeul](https://github.com/geul-org/gogeul). The archive must store records
@@ -31,16 +33,16 @@ raw packs.
 ## Use
 
 ```sh
-silk index build ARCHIVE                     # writes ARCHIVE/.silk/
-silk index update ARCHIVE                    # after new pack generations
-silk index compact ARCHIVE                   # merges that are due (-full, -idle)
-silk index verify ARCHIVE
-silk index stat ARCHIVE
-silk index spec > spec.json                  # the default index specification
-silk query -triple P106=Q169470 ARCHIVE      # documents with Edge Ids
-silk query -count -triple P31=Q5 -triple P106=Q169470 ARCHIVE
-silk query -label ko -match LABEL:1=Q42 ARCHIVE
-silk query -explain -triple P106=Q169470 ARCHIVE
+silkg index build ARCHIVE                    # writes ARCHIVE/.silk/
+silkg index update ARCHIVE                   # after new pack generations
+silkg index compact ARCHIVE                  # merges that are due (-full, -idle)
+silkg index verify ARCHIVE
+silkg index stat ARCHIVE
+silkg index spec > spec.json                 # the default index specification
+silkg query -triple P106=Q169470 ARCHIVE     # documents with Edge Ids
+silkg query -count -triple P31=Q5 -triple P106=Q169470 ARCHIVE
+silkg query -label ko -match LABEL:1=Q42 ARCHIVE
+silkg query -explain -triple P106=Q169470 ARCHIVE
 ```
 
 `-triple PRED=OBJ` takes tokens `Qn`, `Pn`, `#n` (LOCAL) or `*` (any).
@@ -101,7 +103,7 @@ records and their fields from TAG WORDs alone, without a codebook.
 | `pkg/idle` | Idle test from load average and available memory (30% left free) |
 | `pkg/sig` | Entity signature schema, encoder, mask/pattern scan (enum and one-hot fields so far) |
 | `pkg/query` | Conditions → plan (partition and sort keys, exact check, document join) → results |
-| `cmd/silk`, `internal/cli` | Command line |
+| `cmd/silkg`, `internal/cli` | Command line (`silkg`) |
 
 ## License
 

@@ -16,15 +16,15 @@ func printReport(w io.Writer, what string, r index.Report) {
 	if r.NewBytes > 0 {
 		wa = fmt.Sprintf("%.3f", float64(r.Written)/float64(r.NewBytes))
 	}
-	fmt.Fprintf(w, "silk: %s: generation %d; documents %d (new %d, kept %d, removed %d); read %d B (new %d B); written %d B; write amplification %s; %v\n",
+	fmt.Fprintf(w, "silkg: %s: generation %d; documents %d (new %d, kept %d, removed %d); read %d B (new %d B); written %d B; write amplification %s; %v\n",
 		what, r.Generation, r.Docs, r.New, r.Kept, r.Killed, r.Read, r.NewBytes, r.Written, wa, r.Elapsed.Round(time.Millisecond))
 	for _, t := range r.Tasks {
-		fmt.Fprintf(w, "silk:   merge %s\n", t)
+		fmt.Fprintf(w, "silkg:   merge %s\n", t)
 	}
 	if r.Unchanged {
-		fmt.Fprintln(w, "silk: index already matches the archive")
+		fmt.Fprintln(w, "silkg: index already matches the archive")
 	}
 	if r.Paused {
-		fmt.Fprintln(w, "silk: compaction paused at a checkpoint; run silk index compact to resume")
+		fmt.Fprintln(w, "silkg: compaction paused at a checkpoint; run silkg index compact to resume")
 	}
 }

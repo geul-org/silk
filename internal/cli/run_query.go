@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what runQuery — `silk query`: parse flags and conditions, open archive and index, print the plan or run it
+//ff:what runQuery — `silkg query`: parse flags and conditions, open archive and index, print the plan or run it
 package cli
 
 import (

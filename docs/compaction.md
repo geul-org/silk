@@ -38,13 +38,13 @@ them only when no pin names that generation (docs/index.md).
   finished key, dead rows dropped) in `compact.json` and returns
   `ErrPaused` (exit code 3). Finished merges of the round are still
   committed.
-- The next `silk index compact` resumes each checkpoint whose inputs are
+- The next `silkg index compact` resumes each checkpoint whose inputs are
   still exactly in their section: it cuts the temporary file back to the
   checkpoint and continues after the last key. Stale checkpoints lose their
   temporary file.
-- `silk index compact` merges what is due now (`-full`: one run per section);
+- `silkg index compact` merges what is due now (`-full`: one run per section);
   Ctrl-C stops at a checkpoint.
-- `silk index compact -idle` waits for an idle machine before each round and
+- `silkg index compact -idle` waits for an idle machine before each round and
   pauses between partitions while it is busy. Idle means
   `(1-minute load average + threads) / CPUs <= 0.70` and
   `MemAvailable >= 30% of MemTotal` (from `/proc/loadavg` and `/proc/meminfo`),

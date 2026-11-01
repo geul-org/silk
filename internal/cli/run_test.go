@@ -11,7 +11,7 @@ func TestRun(t *testing.T) {
 	if code, _, e := call(""); code != 2 || !strings.Contains(e, "Usage") {
 		t.Fatal(code)
 	}
-	if code, o, _ := call("help"); code != 0 || !strings.Contains(o, "silk index build") {
+	if code, o, _ := call("help"); code != 0 || !strings.Contains(o, "silkg index build") {
 		t.Fatal(code)
 	}
 	if code, _, _ := call("nope"); code != 2 {

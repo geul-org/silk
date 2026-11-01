@@ -22,6 +22,6 @@ func indexVerify(arch, dir string, stdout, stderr io.Writer) int {
 	if err != nil {
 		return fail(stderr, err)
 	}
-	fmt.Fprintf(stdout, "silk: generation %d ok: %d sections, %d segments, %d documents, %d rows\n", r.Generation, r.Sections, r.Segments, r.Docs, r.Rows)
+	fmt.Fprintf(stdout, "silkg: generation %d ok: %d sections, %d segments, %d documents, %d rows\n", r.Generation, r.Sections, r.Segments, r.Docs, r.Rows)
 	return 0
 }

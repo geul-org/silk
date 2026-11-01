@@ -11,7 +11,7 @@ import (
 
 // newIndexFlags binds every index flag to f.
 func newIndexFlags(name string, stderr io.Writer, f *indexFlags) *flag.FlagSet {
-	fs := flag.NewFlagSet("silk index "+name, flag.ContinueOnError)
+	fs := flag.NewFlagSet("silkg index "+name, flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.StringVar(&f.dir, "index", "", "index directory (default ARCHIVE/.silk)")
 	fs.StringVar(&f.spec, "spec", "", "index specification JSON (build: default spec; update: the index's own)")

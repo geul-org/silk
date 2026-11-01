@@ -1,5 +1,5 @@
 //ff:func feature=cli type=helper control=sequence
-//ff:what newQueryFlags — the flag set of `silk query`, writing errors to stderr
+//ff:what newQueryFlags — the flag set of `silkg query`, writing errors to stderr
 package cli
 
 import (
@@ -11,7 +11,7 @@ import (
 
 // newQueryFlags binds every query flag to f.
 func newQueryFlags(stderr io.Writer, f *queryFlags) *flag.FlagSet {
-	fs := flag.NewFlagSet("silk query", flag.ContinueOnError)
+	fs := flag.NewFlagSet("silkg query", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.StringVar(&f.dir, "index", "", "index directory (default ARCHIVE/.silk)")
 	fs.IntVar(&f.threads, "threads", index.DefaultThreads, "checking goroutines")

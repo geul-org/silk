@@ -1,5 +1,5 @@
 //ff:func feature=cli type=helper control=sequence
-//ff:what call — test helper: run a silk command line, returning the exit code, stdout and stderr
+//ff:what call — test helper: run a silkg command line, returning the exit code, stdout and stderr
 package cli
 
 import (

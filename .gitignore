@@ -1,6 +1,6 @@
 # Build output
-/silk
-/cmd/silk/silk
+/silkg
+/cmd/silkg/silkg
 
 # Test and verification state (tsma)
 .tsma/

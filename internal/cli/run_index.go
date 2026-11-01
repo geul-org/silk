@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=selection
-//ff:what runIndex — `silk index build|update|add|compact|verify|stat|spec`
+//ff:what runIndex — `silkg index build|update|add|compact|verify|stat|spec`
 package cli
 
 import (
@@ -35,7 +35,7 @@ func runIndex(args []string, stdout, stderr io.Writer) int {
 	case "stat":
 		return indexStat(dir, stdout, stderr)
 	default:
-		fmt.Fprintf(stderr, "silk: unknown index command %q\n\n%s", args[0], usageText)
+		fmt.Fprintf(stderr, "silkg: unknown index command %q\n\n%s", args[0], usageText)
 		return 2
 	}
 }

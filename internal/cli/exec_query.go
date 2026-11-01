@@ -30,7 +30,7 @@ func execQuery(ctx context.Context, ix *index.Index, p query.Plan, threads int, 
 	if count {
 		fmt.Fprintf(stdout, "%d documents, %d statements\n", len(rs), edges)
 	}
-	fmt.Fprintf(stderr, "silk: %d documents, %d statements; %d segments, %d rows examined, %d dead skipped, %d candidates, %d verified; %v\n",
+	fmt.Fprintf(stderr, "silkg: %d documents, %d statements; %d segments, %d rows examined, %d dead skipped, %d candidates, %d verified; %v\n",
 		len(rs), edges, st.Segments, st.Rows, st.Dead, st.Candidates, st.Verified, el.Round(time.Microsecond))
 	return 0
 }

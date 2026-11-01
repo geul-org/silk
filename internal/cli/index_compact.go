@@ -24,7 +24,7 @@ func indexCompact(ctx context.Context, dir string, f indexFlags, stdout, stderr 
 	r, err := index.Compact(ctx, dir, o)
 	printReport(stdout, "compact", r)
 	if errors.Is(err, index.ErrPaused) {
-		fmt.Fprintln(stderr, "silk: paused")
+		fmt.Fprintln(stderr, "silkg: paused")
 		return 3
 	}
 	if err != nil {

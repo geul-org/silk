@@ -1,20 +1,20 @@
-// Package cli is the silk command line: argument parsing and output only.
+// Package cli is the silkg command line: argument parsing and output only.
 // Building, updating, compacting and querying the index are pkg/index and
 // pkg/query.
 package cli
 
-// usageText is printed by `silk help` and on a usage error.
-const usageText = `silk — query engine for GEUL pack archives (early development)
+// usageText is printed by `silkg help` and on a usage error.
+const usageText = `silkg — query engine for GEUL pack archives (early development)
 
 Usage:
-  silk index build   [-index DIR] [-spec FILE] [-threads N] ARCHIVE
-  silk index update  [-index DIR] [-spec FILE] [-compact] ARCHIVE   (also: add)
-  silk index compact [-index DIR] [-full] [-idle] [-dry] [-threads N] ARCHIVE
-  silk index verify  [-index DIR] ARCHIVE
-  silk index stat    [-index DIR] ARCHIVE
-  silk index spec    (print the default index specification)
-  silk query [-index DIR] [-threads N] [-count] [-explain]
-             (-triple P=O | -match KIND:PATH=VALUE[,PATH=VALUE] | -label LANG)... ARCHIVE
+  silkg index build   [-index DIR] [-spec FILE] [-threads N] ARCHIVE
+  silkg index update  [-index DIR] [-spec FILE] [-compact] ARCHIVE   (also: add)
+  silkg index compact [-index DIR] [-full] [-idle] [-dry] [-threads N] ARCHIVE
+  silkg index verify  [-index DIR] ARCHIVE
+  silkg index stat    [-index DIR] ARCHIVE
+  silkg index spec    (print the default index specification)
+  silkg query [-index DIR] [-threads N] [-count] [-explain]
+              (-triple P=O | -match KIND:PATH=VALUE[,PATH=VALUE] | -label LANG)... ARCHIVE
 
 ARCHIVE is a data folder holding .well-known/geul/ (or that directory) packed
 with records stored raw: GEULCOMPRESS=none geul pack build -o ARCHIVE SRC.

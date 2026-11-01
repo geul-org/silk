@@ -65,7 +65,7 @@ Known layouts (from the grammar pages, `edge/*.md`):
 
 ## Default spec (Wikidata documents)
 
-`silk index spec` prints it.
+`silkg index spec` prints it.
 
 | Tag | Partition | Sort | Min |
 |---|---|---|---:|
@@ -83,7 +83,7 @@ numbers below 2³²). Sixteen bytes hold short BCP 47 tags whole.
 The spec's hash is the SHA-256 of its canonical JSON (`Spec.Encode`). The
 manifest names it and the index keeps a copy as `spec/<hash>.json`. Each
 section records the hash of its own tag, and each segment footer carries it.
-When `silk index update -spec FILE` changes a tag, only that tag's section is
+When `silkg index update -spec FILE` changes a tag, only that tag's section is
 rebuilt (from every live document); other sections keep their segments and
 receive appended rows as usual. A tag removed from the spec loses its section.
 

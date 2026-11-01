@@ -1,6 +1,6 @@
 # Index directory (version 2)
 
-`silk index build ARCHIVE` writes `ARCHIVE/.silk/` (or `-index DIR`):
+`silkg index build ARCHIVE` writes `ARCHIVE/.silk/` (or `-index DIR`):
 
 | Path | Contents |
 |---|---|
@@ -34,7 +34,7 @@ File numbers `<n>` come from the manifest's counter and are never reused.
 ```
 
 - `sets` are the archive set generations the generation covers; a reader on
-  an archive that moved on gets "run silk index update".
+  an archive that moved on gets "run silkg index update".
 - `packs` and `issuers` are append-only lists the document table numbers
   into.
 - A section's `dead` counts rows (in its runs and appended segments) whose
@@ -100,7 +100,7 @@ with several runs is merged into one.
 
 ## Update (incremental)
 
-`silk index update` (alias `add`) compares the archive's live versions with
+`silkg index update` (alias `add`) compares the archive's live versions with
 the live document table by identity (Issuer, document, version) and place
 (set, pack, offset, length):
 
@@ -129,7 +129,7 @@ sequence numbers.
 
 ## Verification
 
-`silk index verify` opens the current generation against the archive and
+`silkg index verify` opens the current generation against the archive and
 checks: every segment's body hash, row order and footer (TAG, widths, spec
 hash, sorted exactly for runs); that the live document table equals the
 archive's live versions; that each section's live rows equal the rows rebuilt

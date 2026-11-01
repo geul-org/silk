@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what compactCmd — `silk index compact` with Ctrl-C turned into a checkpoint (the context ends, merges pause at the next partition)
+//ff:what compactCmd — `silkg index compact` with Ctrl-C turned into a checkpoint (the context ends, merges pause at the next partition)
 package cli
 
 import (

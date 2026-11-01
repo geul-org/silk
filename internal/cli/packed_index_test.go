@@ -1,5 +1,5 @@
 //ff:func feature=cli type=helper control=sequence
-//ff:what packedIndex — test helper: the packed test archive with its index built by `silk index build` (minimum partition from the default spec)
+//ff:what packedIndex — test helper: the packed test archive with its index built by `silkg index build` (minimum partition from the default spec)
 package cli
 
 import (

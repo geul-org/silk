@@ -1,5 +1,5 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what silk CLI entry point — run the command line and exit with its code
+//ff:what silkg CLI entry point — run the command line and exit with its code
 package main
 
 import (

@@ -1,5 +1,5 @@
 //ff:func feature=cli type=helper control=sequence
-//ff:what TestFail — `silk: <error>` and exit code 1
+//ff:what TestFail — `silkg: <error>` and exit code 1
 package cli
 
 import (
@@ -10,7 +10,7 @@ import (
 
 func TestFail(t *testing.T) {
 	var errb bytes.Buffer
-	if fail(&errb, errors.New("boom")) != 1 || errb.String() != "silk: boom\n" {
+	if fail(&errb, errors.New("boom")) != 1 || errb.String() != "silkg: boom\n" {
 		t.Fatal(errb.String())
 	}
 }

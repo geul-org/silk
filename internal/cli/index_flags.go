@@ -1,5 +1,5 @@
 //ff:type feature=cli type=model
-//ff:what indexFlags — the flags of `silk index` subcommands
+//ff:what indexFlags — the flags of `silkg index` subcommands
 package cli
 
 // indexFlags holds parsed values; not every subcommand uses every flag.

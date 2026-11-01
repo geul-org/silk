@@ -15,10 +15,10 @@ import (
 func idlePause(threads int, stderr io.Writer, read func() (idle.Sample, error)) func(context.Context) error {
 	r := idle.Rule{Threads: threads}
 	if s, err := read(); err == nil {
-		fmt.Fprintf(stderr, "silk: idle when (load %.2f + %d threads) / %d CPUs <= 0.70 and memory available >= 30%% (%d of %d MB)\n",
+		fmt.Fprintf(stderr, "silkg: idle when (load %.2f + %d threads) / %d CPUs <= 0.70 and memory available >= 30%% (%d of %d MB)\n",
 			s.Load1, threads, s.CPUs, s.MemAvail>>20, s.MemTotal>>20)
 	} else {
-		fmt.Fprintf(stderr, "silk: %v; compacting without waiting\n", err)
+		fmt.Fprintf(stderr, "silkg: %v; compacting without waiting\n", err)
 	}
 	return func(ctx context.Context) error {
 		return idle.Wait(ctx, r, 2*time.Second, read)
