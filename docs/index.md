@@ -1,146 +1,88 @@
-# Index directory (version 2)
+# Index directory (version 1)
 
-`silkg index build ARCHIVE` writes `ARCHIVE/.silk/` (or `-index DIR`):
+`ARCHIVE/.silk/`, or `-index DIR`:
 
 | Path | Contents |
 |---|---|
-| `CURRENT` | the current generation number |
-| `manifest/<gen>.json` | one manifest per generation (16 hex digits) |
-| `spec/<sha256>.json` | the index specification by hash (docs/spec.md) |
-| `seg/<n>.sseg` | segments (docs/segments.md) |
+| `CURRENT` | the current generation |
+| `manifest/<gen>.json` | one manifest per generation |
+| `decl/<sha256>.json` | a declaration, named by its hash |
+| `grammar/<sha256>.json` | the layouts, names and languages fixed at the first `create` |
+| `seg/<n>.sseg` | segments (segments.md) |
 | `doc/<n>.sdoc` | document table files |
-| `live/<n>.sbit` | live-version bitmap of a generation |
+| `live/<n>.sbit` | the live bitmap |
 | `pin/<gen>-<pid>-<time>` | generations in use by readers |
-| `LOCK` | process ID of the one writer (build, update, compact) |
-| `compact.json` | checkpoints of paused merges |
+| `LOCK` | process ID of the one writer |
+| `tmp/` | runs in progress |
 
-File numbers `<n>` come from the manifest's counter and are never reused.
+Every change is one new manifest and a rename of `CURRENT`. The collector
+removes what neither the current nor a pinned generation names, so a reader
+keeps its files until it closes.
 
-## Manifest
+## Document table
 
-```json
-{
-  "version": 2, "generation": 7, "spec": "<sha256>",
-  "sets": [{"name": "0x00010000", "generation": 3, "manifest": "<sha256>"}],
-  "packs": [{"set": "0x00010000", "hash": "<sha256>"}],
-  "issuers": ["0x00010000"],
-  "docs": [{"file": "doc/…01.sdoc", "first": 0, "count": 16696}],
-  "live": "live/…09.sbit",
-  "sections": [{"name": "TRIPLE", "tag": 4106, "hash": "<tag sha256>",
-                "runs": [{"file": "seg/…", "rows": 2242955, "bytes": 32643686}],
-                "appends": [], "dead": 0}],
-  "next_file": 9
-}
-```
+Each number is one *step* of a pack inventory, in replay order. 40-byte
+entries, big-endian: pack u32, Issuer u32, offset u64, stored length u64,
+document ID u64, version u32, encoding u8, 3 reserved. Encoding 0xFF marks a
+deletion step, which is never live. The tail is magic `SILKDOCS`, first u32,
+count u32, 8 reserved, SHA-256 of the entries. Packs are stored by hash, and
+the object number is found in the open generation, so a location stays valid
+as a set grows.
 
-- `sets` are the archive set generations the generation covers; a reader on
-  an archive that moved on gets "run silkg index update".
-- `packs` and `issuers` are append-only lists the document table numbers
-  into.
-- A section's `dead` counts rows (in its runs and appended segments) whose
-  document version is no longer live. Merges drop them.
+The live bitmap has bit `i%8` of byte `i/8` set when number `i` is live, with
+the same tail (`SILKLIVE`).
 
-## Document table (`.sdoc`)
+## Build and update
 
-Header (56 bytes, big-endian): magic `SILKDOCS`, version u16 = 1, reserved
-u16, first sequence number u32, entry count u32, pair count u32, SHA-256 of
-the body. Body: 40-byte entries, then 6-byte pairs.
+`index update` advances an index; `index build` first forgets everything built
+and keeps the declarations. Then:
 
-| Entry offset | Size | Field |
-|---:|---:|---|
-| 0 | 4 | pack number |
-| 4 | 4 | Issuer number |
-| 8 | 8 | document offset in the data pack |
-| 16 | 4 | document length |
-| 20 | 4 | version ID |
-| 24 | 8 | document ID |
-| 32 | 4 | first pair |
-| 36 | 2 | pair count |
-| 38 | 2 | reserved, 0 |
+1. **Replay.** For each set, each data pack not yet seen, in order: every
+   version step gets the next number, a table entry and a row in the internal
+   *paths* section (identity, number). No path map is held in memory, and no
+   document is read. Paths rows spill into sorted runs like any section.
+2. **Kill.** Walking the new rows in identity order, every number but the last
+   of a path dies, and so does every number older segments hold for that path.
+   So a rewritten path (no deletion entry, only a later step) and a deletion
+   both remove the old rows. A pack that left the set kills its documents;
+   whatever was rewritten comes back through the new pack.
+3. **Rows.** Workers read documents one at a time (`Reader.Record`, raw or
+   zstd) and hand rows to per-section buffers. New documents go to every
+   section; a section declared since gets all live documents. When the buffers
+   reach half of the limit, each becomes a sorted run.
+4. **Merge and place.** Runs merge at most `limit/1 MiB` at a time (2 to 256),
+   level by level. Rows sort as bytes, so the result does not depend on the
+   limit or the thread count: the output is byte for byte the same.
 
-A pair is (TAG WORD u16, record count u32) for every Kind·Codec present in the
-document, whether indexed or not: when the version dies, each section adds
-the records of its kind to `dead`, and a section added later by a spec change
-can still count.
+`-mem` is required; the run also sets Go's soft memory limit to it. The largest
+unpacked document is recorded (`index stat`). A document is read whole, so the
+limit must exceed it; gogeul's `Reader.Record` has no streaming form.
 
-Each update appends one file; sequence numbers continue. A sequence number
-identifies a document *version at a place* (set, pack, offset, length): a
-version rewritten into a new pack generation gets a new sequence number.
+## Append array and compaction
 
-## Live bitmap (`.sbit`)
+Policy fields (`-append-rows`, `-runs-per-tier`, `-stale-ratio`):
 
-Header (56 bytes): magic `SILKLIVE`, version u16 = 1, reserved u16, bit count
-u32, reserved 8 bytes, SHA-256 of the bits. Bit `i` (byte `i/8`, bit `i%8`)
-is set when sequence `i` is live. Each generation that changes liveness writes
-a new file.
+| Field | Default | Meaning |
+|---|---:|---|
+| `AppendRows` | 10,000 | bound of the append array, in rows |
+| `RunsPerTier` | 8 | runs of one size tier (⌊log₈ rows⌋) before they merge |
+| `StaleRatio` | 0.30 | dead row share that forces a major merge |
 
-## Generations, pins and collection
+An update's rows join the append array while it stays under `AppendRows`;
+reaching it merges the array and the new rows into a small sorted run at write
+time. Append segments are sorted too, so a query binary-searches them rather
+than scanning.
 
-A writer takes `LOCK` (created exclusively; a lock whose process is gone is
-taken over), writes new immutable files, writes `manifest/<gen+1>.json` and
-then replaces `CURRENT` (temporary file, sync, rename) — the atomic switch.
-After a commit it removes every file that neither the current generation, nor
-a pinned generation, nor a paused merge (`compact.json`) needs.
+`index compact` merges, per section and in rounds: everything when the section
+is past `StaleRatio` or with `-full`, else the lowest tier holding `RunsPerTier`
+runs. Merges drop dead rows. The dead share is estimated from up to 4,096 evenly
+spaced probes of each segment, so no per-section count has to be maintained.
 
-A reader pins the generation it opens: it reads `CURRENT`, creates
-`pin/<gen>-<pid>-<time>`, and reads `CURRENT` again; if it changed, it drops
-the pin and retries. A writer that commits and then collects therefore either
-sees the pin or the reader sees the new generation. Closing the index removes
-the pin; pins of processes that no longer exist are removed by the collector.
-Old segments thus stay readable until every query that started on their
-generation has finished.
-
-## Build
-
-Every live version document of the archive gets a sequence number in archive
-order and is checked with gogeul (`core.SplitDocument`). Its top-level records
-are framed by TAG WORDs; each record of an indexed kind becomes a row. Rows are
-kept per tag up to a batch size (4 Mi rows) and written as sorted runs; a tag
-with several runs is merged into one.
-
-## Update (incremental)
-
-`silkg index update` (alias `add`) compares the archive's live versions with
-the live document table by identity (Issuer, document, version) and place
-(set, pack, offset, length):
-
-- unchanged versions are not read;
-- new or moved versions are read and their rows written as **appended
-  segments** (one per section), with new sequence numbers;
-- versions no longer in the archive (or moved) are cleared in the bitmap, and
-  their record counts added to each section's `dead`.
-
-Pack sets only ever add objects, so a generation's data packs stay readable;
-only the documents of new objects are new. A tag whose spec hash changed is
-rebuilt from every live version (sorted runs). With `-compact`, the due merges
-run afterwards (docs/compaction.md).
-
-## Queries
-
-A condition fixes fields of one Edge kind (`-triple P=O` is TRIPLE fields 1
-and 3; `-match KIND:PATH=VALUE`; `-label LANG` is LABEL `2.0`). The planner
-uses the field at the tag's partition path as the partition key and the one
-at its sort path as the sort key; other fields are left to the exact check.
-Each segment of the section is searched (binary search in runs, scan in
-appended segments), rows of dead versions are skipped, each candidate record
-is read from its data pack, decoded with gogeul and compared, and the Edge Id
-taken. Several conditions are joined by document with a merge join on
-sequence numbers.
+`-idle-cpu` and `-idle-mem` are the free shares the user wants kept. They have
+no default. The merge waits at pause points until both hold.
 
 ## Verification
 
-`silkg index verify` opens the current generation against the archive and
-checks: every segment's body hash, row order and footer (TAG, widths, spec
-hash, sorted exactly for runs); that the live document table equals the
-archive's live versions; that each section's live rows equal the rows rebuilt
-from the documents; and that each section's dead count equals its rows of
-dead versions.
-
-## Limits (to do)
-
-- Build and update hold one batch of rows per tag in memory, and the
-  other-partition rows of a merge stay in memory; both need spilling for
-  archives far larger than memory.
-- The document table is read whole at update and query time, and the bitmap
-  is rewritten each generation; dead document entries are never reclaimed.
-- Document parsing in build and update is single-threaded.
+`index verify` checks every hash and row order, builds a fresh index in `tmp/`,
+and compares live documents and each section's live rows with document numbers
+read as paths.

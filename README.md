@@ -1,14 +1,25 @@
 # silk
 
-SILK is a query engine for GEUL archives. It answers questions such as "which
-documents state that someone's occupation (P106) is physicist (Q169470)?"
-over large sets of GEUL documents from a partitioned, sorted index of their
-records — and, later, entity signatures — instead of decoding every document.
+SILK (Symbolic Index for LLM Knowledge) is a search engine for GEUL archives.
+Its core is a sorted array whose keys carry meaning in their bits: search is
+stepwise narrowing, a jump to a sorted range at each step, and only the
+candidates that remain are read from their documents.
 
-Status: **early development.** Partitioned indexes, incremental updates,
-size-tiered compaction and queries on any indexed Edge field work; entity
-signatures exist as a library but are not yet built into indexes. Formats may
-change before a first release.
+Status: **early development.** Formats may change before a first release.
+
+Four kinds of section share one segment format (fixed-width rows in byte order,
+mapped with `mmap`, never compressed):
+
+| Kind | Finds | Row |
+|---|---|---|
+| index | records | key slots W, document 4 B, offset 4 B |
+| silk | meaning | meaning bits, document 4 B (two bundles: value order, document order) |
+| text | strings | first 8 text bytes, document 4 B, QID 4 B |
+| composite | both | first 8 text bytes, meaning 4 B, QID 4 B, document 4 B |
+
+Archives are GEUL pack sets, raw or zstd, read through
+[gogeul](https://github.com/geul-org/gogeul). Layouts, names and languages come
+from the archive's own grammar set `0x0000` (or `-grammar DIR`).
 
 ## Install
 
@@ -16,97 +27,53 @@ change before a first release.
 go install github.com/geul-org/silk/cmd/silkg@latest
 ```
 
-The command is `silkg`.
-
-SILK reads GEUL pack archives through
-[gogeul](https://github.com/geul-org/gogeul). The archive must store records
-raw (uncompressed), because the index points into data pack bytes:
-
-```sh
-GEULCOMPRESS=none geul pack build -o ARCHIVE SRC   # SRC: a directory archive
-```
-
-A zstd-compressed archive is rejected with an error asking for an
-uncompressed pack. zstd is for distribution and storage; the search tier uses
-raw packs.
+Linux and other Unix systems (`mmap`).
 
 ## Use
 
+`create` declares, `index update` builds what is declared or new, and every
+writer needs a memory limit: there is no default.
+
 ```sh
-silkg index build ARCHIVE                    # writes ARCHIVE/.silk/
-silkg index update ARCHIVE                   # after new pack generations
-silkg index compact ARCHIVE                  # merges that are due (-full, -idle)
-silkg index verify ARCHIVE
+silkg create index triple TRIPLE -part predicate -key object -width 6 ARCHIVE
+silkg create text label LABEL ARCHIVE
+silkg create silk entity -def entity.silk ARCHIVE
+silkg create composite label-sem LABEL -def meaning.silk ARCHIVE
+silkg list ARCHIVE
+silkg drop NAME ARCHIVE
+
+silkg index update -mem 2G ARCHIVE        # new documents, sections declared since
+silkg index build -mem 2G ARCHIVE         # every section from scratch
+silkg index compact -mem 2G ARCHIVE       # merges that are due
+silkg index compact -mem 2G -full ARCHIVE # one run per section
+silkg index compact -mem 2G -idle-cpu 0.3 -idle-mem 0.3 ARCHIVE
+silkg index verify -mem 2G ARCHIVE        # against a fresh build
 silkg index stat ARCHIVE
-silkg index spec > spec.json                 # the default index specification
-silkg query -triple P106=Q169470 ARCHIVE     # documents with Edge Ids
-silkg query -count -triple P31=Q5 -triple P106=Q169470 ARCHIVE
-silkg query -label ko -match LABEL:1=Q42 ARCHIVE
-silkg query -explain -triple P106=Q169470 ARCHIVE
+
+silkg query TRIPLE predicate=P106 object=Q169470 ARCHIVE
+silkg query -keys TRIPLE predicate=P106 object=Q169470 ARCHIVE
+silkg query LABEL object.language=@ko 'object.bytes="김치"' ARCHIVE
+silkg query LABEL 'object.bytes^="김치"' ARCHIVE
+silkg query entity job=politician area=asia ARCHIVE
+silkg query label-sem object.language=@en 'object.bytes="Paris"' type=city ARCHIVE
+silkg query LABEL 'object.bytes="Paris"' entity type=city ARCHIVE
+silkg query -batch ARCHIVE < queries.txt
+silkg query -explain -scan ... ARCHIVE
 ```
 
-`-triple PRED=OBJ` takes tokens `Qn`, `Pn`, `#n` (LOCAL) or `*` (any).
-`-match KIND:PATH=VALUE[,PATH=VALUE]` fixes fields of any indexed Edge kind
-(`1` is the first field after the Edge Id, `2.0` the language of a
-language-tagged text) with tokens `Qn`, `Pn`, `#n`, `@lang` or `0x<record
-hex>`; `-label LANG` is `-match LABEL:2.0=@LANG`. All conditions must hold in
-one document. Results are printed as `<Issuer>/<document>/<version>.geul
-#<Edge Id>,…`. `-threads N` (default 8) bounds worker goroutines, leaving a
-desktop usable; `-index DIR` puts the index elsewhere.
+A word without `=` opens a condition: a TAG, a declared section, or a silk.
+Conditions must hold in one document. Output is the document path, `#Edge Id`,
+`~` for a row that is only a candidate, and `?` for a value the statements
+leave unknown. `-keys` reads rows only and never opens a document.
 
-On 16,696 Wikidata documents (271 MB, 7.07 million indexed records) a build
-takes about 3 s and writes 113 MB. `-triple P106=Q169470` answers in about
-0.13 ms, `-triple P31=Q5` (1,579 documents) in about 1 ms, where the earlier
-full scan of the TRIPLE records took about 20 ms. An update with 4,217
-changed documents takes 1.8 s; query results after updates and compactions
-equal those of a fresh build.
+`-index DIR` keeps the index elsewhere (default `ARCHIVE/.silk`). A query no
+section can answer is refused with the `create index` that would answer it;
+`-scan` reads every live document instead.
 
-## How it works
-
-GEUL records start with a 16-bit TAG WORD that gives the record's kind,
-codec and length; the fields of an Edge are themselves records. SILK frames
-records and their fields from TAG WORDs alone, without a codebook.
-
-- **Index specification.** For each TAG kind the spec declares a partition
-  key and a sort key — record fields at fixed positions (TRIPLE: Predicate
-  and Object; LABEL: language and Subject) — and a minimum partition size.
-  Positions that need the codebook, and unbounded fields as partition keys,
-  are rejected. Nothing is hard-coded: [docs/spec.md](docs/spec.md).
-- **Segments.** Each kind's entries live in segments: rows of (sort key
-  slot, document, offset) grouped by partition, small partitions together in
-  an "other" partition. Sorted runs are binary-searched; appended segments
-  from updates are scanned. [docs/segments.md](docs/segments.md).
-- **Generations.** A manifest per generation lists the segments, the
-  document table and a live-version bitmap; switching `CURRENT` is atomic,
-  readers pin their generation, and old files go when no one reads them.
-  Updates read only new or moved document versions and mark replaced ones
-  dead. [docs/index.md](docs/index.md).
-- **Compaction.** Appended segments become small runs, runs of similar size
-  merge in O(n), and the base run joins when there are too many runs or too
-  many dead rows; merges pause and resume at partition boundaries and can
-  wait for an idle machine. [docs/compaction.md](docs/compaction.md).
-- **Exact check.** Every candidate is decoded with gogeul and compared field
-  by field, and its Edge Id read; conditions are joined by document.
-- **Documents are not reordered.** The index is a sorted view; the GEUL
-  bytes, their content hashes and signatures stay as published.
-- **Entity signatures (next).** A fixed-width bit string per entity whose
-  fields the user declares, as an approximate first filter.
-
-## Layout
-
-| Path | Contents |
-|---|---|
-| `pkg/archive` | Open a pack archive: sets, data packs, version documents per pack (raw only) |
-| `pkg/spec` | Index specification: tags, keys, known Edge layouts, validation, key extraction by TAG WORD framing |
-| `pkg/seg` | Segment files: writer (with checkpoints), reader, binary search, scan, k-way merge |
-| `pkg/index` | Index directory: manifest generations, document table, live bitmap, build, update, compaction, pins and collection, verification |
-| `pkg/idle` | Idle test from load average and available memory (30% left free) |
-| `pkg/sig` | Entity signature schema, encoder, mask/pattern scan (enum and one-hot fields so far) |
-| `pkg/query` | Conditions → plan (partition and sort keys, exact check, document join) → results |
-| `cmd/silkg`, `internal/cli` | Command line (`silkg`) |
+Documents: [docs/segments.md](docs/segments.md),
+[docs/index.md](docs/index.md), [docs/silk.md](docs/silk.md),
+[docs/query.md](docs/query.md).
 
 ## License
 
-The project's own work is dedicated to the public domain under
-[CC0 1.0](LICENSE). Third-party components keep their licenses; see
-[NOTICE](NOTICE).
+CC0 1.0 for our own work; see LICENSE and NOTICE.

@@ -1,17 +1,21 @@
 //ff:func feature=index type=reader control=sequence
-//ff:what Open — pin the current generation and load it against the archive (stale sets are ErrStale)
+//ff:what Open — pin the current generation and map its files; a set generation the index does not cover is ErrStale; a cache of cacheBytes decoded documents
 package index
 
-import "github.com/geul-org/silk/pkg/archive"
+import (
+	"context"
 
-// Open opens dir's current generation for queries. Close releases the pin.
-func Open(a *archive.Archive, dir string) (*Index, error) {
-	gen, pin, err := pinCurrent(dir, readCurrent)
+	"github.com/geul-org/silk/pkg/archive"
+	"github.com/geul-org/silk/pkg/decl"
+)
+
+func Open(ctx context.Context, ar *archive.Archive, dir string, cacheBytes int64) (*Index, error) {
+	g, pin, err := pinCurrent(dir, readCurrent)
 	if err != nil {
 		return nil, err
 	}
-	ix := &Index{Dir: dir, pin: pin}
-	if err := ix.load(a, gen); err != nil {
+	ix := &Index{Dir: dir, ar: ar, pin: pin, Decls: map[string]decl.Decl{}, secs: map[string][]*Sec{}, cache: newDocCache(cacheBytes)}
+	if err := ix.load(g); err != nil {
 		ix.Close()
 		return nil, err
 	}

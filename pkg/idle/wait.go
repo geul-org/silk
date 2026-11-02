@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-// Wait polls sample every poll until r.Idle; a sample error (no /proc) does
-// not block. It returns ctx.Err() when the context ends first.
 func Wait(ctx context.Context, r Rule, poll time.Duration, sample func() (Sample, error)) error {
 	for {
 		if err := ctx.Err(); err != nil {

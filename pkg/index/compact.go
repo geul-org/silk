@@ -1,27 +1,33 @@
-//ff:func feature=index type=writer control=sequence
-//ff:what Compact — take the writer lock and run the due merges of the current generation (resuming paused ones first)
+//ff:func feature=index type=builder control=sequence
+//ff:what Compact — merge what the policy says is due until nothing is; with full, one run per section. Idle waits go in Options.Pause
 package index
 
 import (
 	"context"
-	"time"
+	"os"
+	"path/filepath"
+	"runtime/debug"
+	"strconv"
 )
 
-// Compact merges until the policy finds nothing due (o.Full: until each
-// section is one sorted run without dead rows). ErrPaused means a merge
-// stopped at a checkpoint; calling Compact again resumes it.
-func Compact(ctx context.Context, dir string, o Options) (Report, error) {
-	t0 := time.Now()
+func Compact(ctx context.Context, dir string, o Options, full bool) (Report, error) {
+	if o.Limit <= 0 {
+		return Report{}, ErrLimit
+	}
 	unlock, err := lockDir(dir)
 	if err != nil {
 		return Report{}, err
 	}
 	defer unlock()
-	m, err := CurrentManifest(dir)
+	defer debug.SetMemoryLimit(debug.SetMemoryLimit(o.Limit))
+	m, err := currentManifest(dir)
 	if err != nil {
 		return Report{}, err
 	}
-	rep, err := compact(ctx, dir, &m, o)
-	rep.Elapsed = time.Since(t0)
-	return rep, err
+	c := &compactor{dir: dir, o: o, m: m, full: full, tmp: filepath.Join(dir, dirTmp, strconv.Itoa(os.Getpid()))}
+	defer os.RemoveAll(c.tmp)
+	if err := os.MkdirAll(c.tmp, 0o755); err != nil {
+		return Report{}, err
+	}
+	return c.rounds(ctx)
 }

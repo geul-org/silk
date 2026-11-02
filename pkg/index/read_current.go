@@ -10,7 +10,6 @@ import (
 	"strings"
 )
 
-// readCurrent reads dir/CURRENT ("<generation>\n").
 func readCurrent(dir string) (uint64, error) {
 	b, err := os.ReadFile(filepath.Join(dir, currentFile))
 	if os.IsNotExist(err) {

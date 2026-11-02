@@ -8,7 +8,6 @@ import (
 	"fmt"
 )
 
-// readObjects decodes an OBJECTS section body; its length must be exact.
 func readObjects(sec []byte) ([]Object, error) {
 	if len(sec) < 4 {
 		return nil, fmt.Errorf("%w: OBJECTS truncated", ErrManifest)

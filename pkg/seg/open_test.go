@@ -1,32 +1,38 @@
-//ff:func feature=seg type=reader control=sequence
-//ff:what TestOpen — a written segment opens with path and size; a missing, unreadable or malformed file fails
+//ff:func feature=seg type=scanner control=sequence
+//ff:what TestOpen — a missing, short, or inconsistent file fails; Map and Unmap on empty are harmless
 package seg
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestOpen(t *testing.T) {
-	f := sampleSeg(t, true)
-	if f.Info.Bytes == 0 || len(f.Parts) != 2 || f.Info.Other != 2 {
-		t.Fatal(f.Info, f.Parts)
-	}
-	d := t.TempDir()
-	if _, err := Open(filepath.Join(d, "none")); err == nil {
+	dir := t.TempDir()
+	if _, err := Open(filepath.Join(dir, "none")); err == nil {
 		t.Fatal("missing")
 	}
-	bad := filepath.Join(d, "bad")
-	os.WriteFile(bad, []byte("short"), 0o644)
-	if _, err := Open(bad); err == nil {
-		t.Fatal("malformed")
+	short := filepath.Join(dir, "short")
+	os.WriteFile(short, []byte("x"), 0o644)
+	if _, err := Open(short); !errors.Is(err, ErrFormat) {
+		t.Fatal(err)
 	}
-	os.Chmod(bad, 0)
-	if _, err := os.ReadFile(bad); err == nil {
-		t.Skip("running as root: permissions not enforced")
+	bad := filepath.Join(dir, "bad")
+	os.WriteFile(bad, make([]byte, footerSize), 0o644)
+	if _, err := Open(bad); !errors.Is(err, ErrFormat) {
+		t.Fatal(err)
 	}
-	if _, err := Open(bad); err == nil {
-		t.Fatal("unreadable")
+	empty := filepath.Join(dir, "empty")
+	os.WriteFile(empty, nil, 0o644)
+	if b, err := Map(empty); b != nil || err != nil {
+		t.Fatal(b, err)
+	}
+	if err := Unmap(nil); err != nil {
+		t.Fatal(err)
+	}
+	if b, err := Map(dir); err == nil {
+		t.Fatal(b)
 	}
 }

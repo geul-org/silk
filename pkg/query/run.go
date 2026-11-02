@@ -1,5 +1,5 @@
-//ff:func feature=query type=scanner control=iteration dimension=1
-//ff:what Run — follow a plan: each condition's documents, joined by document, as Results in (Issuer, document, version) order
+//ff:func feature=query type=builder control=iteration dimension=1
+//ff:what Run — answer a query: plan each condition, narrow by rows, then check what rows cannot decide
 package query
 
 import (
@@ -9,26 +9,26 @@ import (
 	"github.com/geul-org/silk/pkg/index"
 )
 
-// Run answers p over ix.
-func Run(ctx context.Context, ix *index.Index, p Plan, threads int) ([]Result, Stats, error) {
-	if len(p.Conds) == 0 {
-		return nil, Stats{}, fmt.Errorf("%w: no condition", ErrSyntax)
+func Run(ctx context.Context, ix *index.Index, q Query) (Result, error) {
+	r := &runner{ix: ix, ctx: ctx, seen: map[uint32]bool{}}
+	if q.Scan {
+		return r.scan(q)
 	}
-	var acc []docHit
-	var st Stats
-	for i, cp := range p.Conds {
-		if err := ctx.Err(); err != nil {
-			return nil, st, err
-		}
-		hs, err := runCond(ix, cp, threads, &st)
+	var res Result
+	var hits []Hit
+	for i := range q.Conds {
+		p, err := makePlan(ix, &q.Conds[i], q.Index)
 		if err != nil {
-			return nil, st, err
+			return res, err
 		}
-		if i == 0 {
-			acc = hs
-		} else {
-			acc = joinDocs(acc, hs)
+		res.Plans = append(res.Plans, p.describe())
+		if q.Mode == ModeKeys && !p.keysOK() {
+			return res, fmt.Errorf("%w: %s", ErrNotCovered, p.Name)
+		}
+		if hits, err = r.stage(i, p, hits, q); err != nil {
+			return res, err
 		}
 	}
-	return toResults(ix, acc), st, nil
+	res.Hits, res.Decoded = trimBare(hits), len(r.seen)
+	return res, nil
 }

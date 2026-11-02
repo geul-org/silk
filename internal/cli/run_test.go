@@ -1,5 +1,5 @@
-//ff:func feature=cli type=command control=sequence
-//ff:what TestRun — help and dispatch: no arguments and unknown commands are usage errors (2), help is 0
+//ff:func feature=cli type=scanner control=sequence
+//ff:what TestRun — no command and an unknown command print usage; a failed command exits 1
 package cli
 
 import (
@@ -8,19 +8,13 @@ import (
 )
 
 func TestRun(t *testing.T) {
-	if code, _, e := call(""); code != 2 || !strings.Contains(e, "Usage") {
-		t.Fatal(code)
+	if c, _, e := silkg(""); c != exitUsage || !strings.Contains(e, "usage") {
+		t.Fatal(c, e)
 	}
-	if code, o, _ := call("help"); code != 0 || !strings.Contains(o, "silkg index build") {
-		t.Fatal(code)
+	if c, _, _ := silkg("", "nope"); c != exitUsage {
+		t.Fatal(c)
 	}
-	if code, _, _ := call("nope"); code != 2 {
-		t.Fatal(code)
-	}
-	if code, _, _ := call("index"); code != 2 {
-		t.Fatal(code)
-	}
-	if code, _, _ := call("query"); code != 2 {
-		t.Fatal(code)
+	if c, _, e := silkg("", "drop"); c != exitError || !strings.Contains(e, "silkg:") {
+		t.Fatal(c, e)
 	}
 }

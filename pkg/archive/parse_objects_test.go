@@ -1,34 +1,47 @@
-//ff:func feature=archive type=decoder control=sequence
-//ff:what TestParseObjects — a real manifest's OBJECTS (index then data pack); short, wrong magic and missing sections fail
+//ff:func feature=archive type=scanner control=sequence
+//ff:what TestParseObjects — headers, section tables and OBJECTS bodies are bounds checked
 package archive
 
 import (
-	"context"
+	"encoding/binary"
 	"errors"
-	"os"
-	"path/filepath"
+	"slices"
 	"testing"
-
-	"github.com/geul-org/silk/internal/fixture"
 )
 
 func TestParseObjects(t *testing.T) {
-	a, _ := Open(context.Background(), fixture.Packed(t, nil))
-	s := a.Sets[0]
-	b, _ := os.ReadFile(filepath.Join(s.Dir, "m", s.Manifest+".gpm"))
-	objs, err := parseObjects(b)
-	if err != nil || len(objs) == 0 || len(objs[0].Hash) != 64 {
+	if _, err := parseObjects([]byte("x")); !errors.Is(err, ErrManifest) {
+		t.Fatal(err)
+	}
+	head := append([]byte(manifestMagic), make([]byte, manifestHead-8)...)
+	binary.LittleEndian.PutUint32(head[12:], 1)
+	if _, err := parseObjects(head); !errors.Is(err, ErrManifest) {
+		t.Fatal(err)
+	}
+	e := make([]byte, sectionSize)
+	binary.LittleEndian.PutUint16(e, secObjects)
+	binary.LittleEndian.PutUint64(e[8:], manifestHead+sectionSize)
+	binary.LittleEndian.PutUint64(e[16:], 52)
+	body := make([]byte, 52)
+	binary.LittleEndian.PutUint32(body, 1)
+	body[4] = 1
+	objs, err := parseObjects(append(append(slices.Clone(head), e...), body...))
+	if err != nil || len(objs) != 1 || objs[0].Kind != 1 {
 		t.Fatal(objs, err)
 	}
-	if _, err := parseObjects(b[:10]); !errors.Is(err, ErrManifest) {
+	if _, err := sectionOf(append(slices.Clone(head), e...), 1, secObjects); !errors.Is(err, ErrManifest) {
 		t.Fatal(err)
 	}
-	bad := append([]byte("XEULMANI"), b[8:]...)
-	if _, err := parseObjects(bad); !errors.Is(err, ErrManifest) {
+	if _, err := sectionOf(append(slices.Clone(head), e...), 1, 0x9); !errors.Is(err, ErrManifest) {
 		t.Fatal(err)
 	}
-	head := append([]byte(nil), b[:64]...)
-	if _, err := parseObjects(head); !errors.Is(err, ErrManifest) {
+	if _, err := sectionOf(head, -1, 1); !errors.Is(err, ErrManifest) {
+		t.Fatal(err)
+	}
+	if _, err := readObjects([]byte{1}); !errors.Is(err, ErrManifest) {
+		t.Fatal(err)
+	}
+	if _, err := readObjects([]byte{1, 0, 0, 0}); !errors.Is(err, ErrManifest) {
 		t.Fatal(err)
 	}
 }

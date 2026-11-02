@@ -1,39 +1,55 @@
-// Package index keeps SILK's index directory: for each TAG kind of the
-// index specification a section of segment files (sorted runs and appended
-// segments, pkg/seg), a document table, a live-version bitmap and a
-// manifest per generation. A generation is switched atomically by rewriting
-// CURRENT; files are never changed, and files no current or pinned
-// generation names are removed. Build indexes an archive from scratch,
-// Update adds the documents of new pack generations as appended segments,
-// Compact merges segments by size tier (docs/index.md).
+// Package index is a SILK index directory: generations of a manifest over
+// declarations, a document table, a live bitmap and segments. Build and update
+// read packs in pieces under a memory limit the caller sets; compaction
+// merges size-tiered runs; a reader pins a generation and maps its files.
+// See docs/index.md.
 package index
 
+import "errors"
+
 const (
-	manifestVersion = 2
+	manifestVersion = 1
 	currentFile     = "CURRENT"
 	lockFile        = "LOCK"
-	checkpointFile  = "compact.json"
 	dirManifest     = "manifest"
+	dirDecl         = "decl"
+	dirGrammar      = "grammar"
 	dirSeg          = "seg"
 	dirDoc          = "doc"
 	dirLive         = "live"
-	dirSpec         = "spec"
 	dirPin          = "pin"
-	docsMagic       = "SILKDOCS"
-	liveMagic       = "SILKLIVE"
-	fileVersion     = 1
-	docsHead        = 56
-	docSize         = 40
-	pairSize        = 6
-	liveHead        = 56
-	// DefaultThreads is the default number of worker goroutines: enough for
-	// memory bandwidth while leaving a desktop usable (about 30% free).
-	DefaultThreads = 8
-	// DefaultBatch is the rows of one TAG kind kept in memory before a build
-	// writes them as a sorted run (merged afterwards).
-	DefaultBatch = 4 << 20
-	// TaskFlush, TaskTier and TaskMajor are the compaction task kinds.
-	TaskFlush = "flush"
-	TaskTier  = "tier"
-	TaskMajor = "major"
+	dirTmp          = "tmp"
+
+	docMagic  = "SILKDOCS"
+	liveMagic = "SILKLIVE"
+	docSize   = 40
+	tailSize  = 56
+	pathKey   = 16
+	encDead   = 0xFF
+
+	minFanIn   = 2
+	maxFanIn   = 256
+	fanInBytes = 1 << 20
+	staleProbe = 4096
+)
+
+var (
+	// ErrStale means the index was built from other set generations than the archive now has.
+	ErrStale = errors.New("silk/index: index does not match the archive (run silkg index update)")
+	// ErrNoIndex means the directory holds no index yet.
+	ErrNoIndex = errors.New("silk/index: no index (run silkg create, then silkg index build)")
+	// ErrFormat means an index file breaks its format.
+	ErrFormat = errors.New("silk/index: bad index file")
+	// ErrLocked means another process is writing the index.
+	ErrLocked = errors.New("silk/index: index is locked by another writer")
+	// ErrLimit means the operation needs a memory limit from the caller.
+	ErrLimit = errors.New("silk/index: a memory limit is required")
+	// ErrMismatch means verification found the index differs from the archive.
+	ErrMismatch = errors.New("silk/index: index does not match its documents")
+	// ErrPending means a section was declared but not built yet.
+	ErrPending = errors.New("silk/index: section not built (run silkg index update)")
+	// ErrExists means the name is already declared.
+	ErrExists = errors.New("silk/index: name already declared")
+	// ErrUnknown means no such section is declared.
+	ErrUnknown = errors.New("silk/index: no such section")
 )

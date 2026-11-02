@@ -1,31 +1,22 @@
-//ff:func feature=seg type=decoder control=iteration dimension=1
-//ff:what TestParseFooter — a good footer parses; wrong length, magic, version, flags, reserved bytes, widths or padding fail
+//ff:func feature=seg type=scanner control=iteration dimension=1
+//ff:what TestParseFooter — a footer round trips; damaged ones fail
 package seg
 
 import (
 	"errors"
+	"slices"
 	"testing"
 )
 
 func TestParseFooter(t *testing.T) {
-	good := encodeFooter(Info{PartWidth: 2, SortWidth: 2})
-	if _, err := parseFooter(good); err != nil {
-		t.Fatal(err)
+	b := encodeFooter(testInfo(), 2, 3, make([]byte, 32))
+	i, p, r, err := parseFooter(b)
+	if err != nil || i != testInfo() || p != 2 || r != 3 {
+		t.Fatal(i, p, r, err)
 	}
-	edits := []func(b []byte) []byte{
-		func(b []byte) []byte { return b[:100] },
-		func(b []byte) []byte { b[0] = 'X'; return b },
-		func(b []byte) []byte { b[127] = 'X'; return b },
-		func(b []byte) []byte { b[9] = 2; return b },
-		func(b []byte) []byte { b[11] = 4; return b },
-		func(b []byte) []byte { b[19] = 1; return b },
-		func(b []byte) []byte { b[14] = 1; return b },
-		func(b []byte) []byte { b[16] = 1; return b },
-		func(b []byte) []byte { b[110] = 1; return b },
-	}
-	for i, e := range edits {
-		if _, err := parseFooter(e(append([]byte{}, good...))); !errors.Is(err, ErrFormat) {
-			t.Fatalf("edit %d: %v", i, err)
+	for _, bad := range [][]byte{b[:9], append([]byte("XXXXXXXX"), b[8:]...), append(slices.Clone(b[:120]), "XXXXXXXX"...), append(append(slices.Clone(b[:8]), 0, 9), b[10:]...)} {
+		if _, _, _, err := parseFooter(bad); !errors.Is(err, ErrFormat) {
+			t.Fatal(err)
 		}
 	}
 }

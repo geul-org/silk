@@ -1,39 +1,47 @@
-//ff:func feature=seg type=rule control=sequence
-//ff:what TestFileVerify — written segments verify; a read error, a changed body byte, rows out of order and a key in both places fail
+//ff:func feature=seg type=scanner control=sequence
+//ff:what TestFileVerify — a sound segment passes; a flipped byte, broken rows and a broken table fail
 package seg
 
 import (
-	"bytes"
+	"crypto/sha256"
+	"errors"
+	"slices"
 	"testing"
 )
 
 func TestFileVerify(t *testing.T) {
-	f := sampleSeg(t, true)
+	f := writeSeg(t, "a")
 	if err := f.Verify(); err != nil {
 		t.Fatal(err)
 	}
-	if err := failing(f, 0).Verify(); err == nil {
-		t.Fatal("read error")
+	fix := func(g *File) {
+		e := uint64(len(g.b) - footerSize)
+		s := sha256.Sum256(g.b[:e])
+		copy(g.b[e+64:], s[:])
 	}
-	raw := make([]byte, f.Info.Bytes)
-	f.r.ReadAt(raw, 0)
-	flip := append([]byte{}, raw...)
-	flip[0] ^= 1
-	g := *f
-	g.r = bytes.NewReader(flip)
-	if err := g.Verify(); err == nil {
-		t.Fatal("hash")
+	damage := func(mut func(b []byte)) error {
+		b := slices.Clone(f.b)
+		mut(b)
+		g, err := frame("x", b)
+		if err != nil {
+			t.Fatal(err)
+		}
+		fix(g)
+		return g.Verify()
 	}
-	if err := resealed(f, swapRows(raw, 0, 10, 10)).Verify(); err == nil {
-		t.Fatal("partition rows out of order")
+	if err := damage(func(b []byte) { copy(b, row(9, 9, 9)) }); !errors.Is(err, ErrFormat) {
+		t.Fatal("rows", err)
 	}
-	if err := resealed(f, swapRows(raw, 50, 62, 12)).Verify(); err == nil {
-		t.Fatal("other rows out of order")
+	if err := damage(func(b []byte) { copy(b[18:], "pb") }); !errors.Is(err, ErrFormat) {
+		t.Fatal("table", err)
 	}
-	dup := append([]byte{}, raw...)
-	copy(dup[50:52], "aa")
-	copy(dup[62:64], "aa")
-	if err := resealed(f, dup).Verify(); err == nil {
-		t.Fatal("key in the table and in the other partition")
+	if err := damage(func(b []byte) { b[18+2+16+2+15] = 0 }); !errors.Is(err, ErrFormat) {
+		t.Fatal("count", err)
+	}
+	b := slices.Clone(f.b)
+	b[0] ^= 1
+	g, _ := frame("x", b)
+	if err := g.Verify(); !errors.Is(err, ErrFormat) {
+		t.Fatal("hash", err)
 	}
 }

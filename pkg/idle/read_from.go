@@ -1,26 +1,28 @@
 //ff:func feature=idle type=reader control=sequence
-//ff:what readFrom — a Sample from a loadavg file and a meminfo file and a CPU count
+//ff:what readFrom — a Sample from these two files
 package idle
 
 import (
-	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
-// readFrom reads the two files (tests point it elsewhere).
-func readFrom(loadPath, memPath string, cpus int) (Sample, error) {
-	lb, err := os.ReadFile(loadPath)
-	if err != nil {
-		return Sample{}, fmt.Errorf("%w: %v", ErrUnsupported, err)
+func readFrom(loadavg, meminfo string, cpus int) (Sample, error) {
+	l, err1 := os.ReadFile(loadavg)
+	m, err2 := os.ReadFile(meminfo)
+	if err1 != nil || err2 != nil {
+		return Sample{}, ErrUnsupported
 	}
-	mb, err := os.ReadFile(memPath)
-	if err != nil {
-		return Sample{}, fmt.Errorf("%w: %v", ErrUnsupported, err)
+	f := strings.Fields(string(l))
+	if len(f) == 0 {
+		return Sample{}, ErrUnsupported
 	}
-	l, err := parseLoadavg(lb)
+	load, err := strconv.ParseFloat(f[0], 64)
 	if err != nil {
-		return Sample{}, err
+		return Sample{}, ErrUnsupported
 	}
-	t, a, err := parseMeminfo(mb)
-	return Sample{Load1: l, CPUs: cpus, MemTotal: t, MemAvail: a}, err
+	s := Sample{Load1: load, CPUs: cpus}
+	s.MemTotal, s.MemAvail = parseMeminfo(string(m))
+	return s, nil
 }

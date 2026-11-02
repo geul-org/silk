@@ -1,17 +1,18 @@
 //ff:type feature=index type=model
-//ff:what Manifest — one index generation: spec hash, archive sets, packs, Issuers, document files, live bitmap, sections, next file number
+//ff:what Manifest — one generation of the index
 package index
 
-// Manifest is `manifest/<generation>.json`; CURRENT names the live one.
 type Manifest struct {
 	Version    int       `json:"version"`
 	Generation uint64    `json:"generation"`
-	Spec       string    `json:"spec"`
-	Sets       []SetRef  `json:"sets"`
-	Packs      []PackRef `json:"packs"`
-	Issuers    []string  `json:"issuers"`
-	Docs       []DocFile `json:"docs"`
-	Live       string    `json:"live"`
-	Sections   []Section `json:"sections"`
+	Grammar    string    `json:"grammar,omitempty"`
+	Sets       []SetRef  `json:"sets,omitempty"`
+	Packs      []PackRef `json:"packs,omitempty"`
+	Issuers    []string  `json:"issuers,omitempty"`
+	Docs       []DocFile `json:"docs,omitempty"`
+	Live       string    `json:"live,omitempty"`
+	Paths      Section   `json:"paths"`
+	Sections   []Section `json:"sections,omitempty"`
+	MaxDoc     uint64    `json:"max_doc,omitempty"`
 	NextFile   uint64    `json:"next_file"`
 }

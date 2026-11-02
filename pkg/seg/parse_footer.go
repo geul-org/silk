@@ -1,26 +1,18 @@
 //ff:func feature=seg type=decoder control=sequence
-//ff:what parseFooter — the 128-byte footer back to an Info; wrong magic, version, flags, widths or nonzero padding is ErrFormat
+//ff:what parseFooter — the shape and counts from a footer
 package seg
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 )
 
-// parseFooter reads b (exactly footerSize bytes).
-func parseFooter(b []byte) (Info, error) {
-	be := binary.BigEndian
-	if len(b) != footerSize || string(b[:8]) != magic || string(b[120:]) != magic || be.Uint16(b[8:]) != version {
-		return Info{}, fmt.Errorf("%w: footer", ErrFormat)
+func parseFooter(b []byte) (Info, uint64, uint64, error) {
+	if len(b) != footerSize || string(b[:8]) != magic || string(b[footerSize-8:]) != magic || binary.BigEndian.Uint16(b[8:]) != version {
+		return Info{}, 0, 0, fmt.Errorf("%w: footer", ErrFormat)
 	}
-	flags := be.Uint16(b[10:])
-	i := Info{Tag: be.Uint16(b[12:]), PartWidth: int(be.Uint16(b[14:])), SortWidth: int(be.Uint16(b[16:])),
-		Sorted: flags&flagSorted != 0, Parts: be.Uint32(b[20:]), Rows: be.Uint64(b[24:]), Other: be.Uint64(b[32:])}
-	copy(i.Spec[:], b[40:72])
-	copy(i.Sum[:], b[72:104])
-	if flags&^flagSorted != 0 || be.Uint16(b[18:]) != 0 || i.PartWidth > 64 || i.SortWidth > 64 || !bytes.Equal(b[104:120], make([]byte, 16)) {
-		return Info{}, fmt.Errorf("%w: footer fields", ErrFormat)
-	}
-	return i, nil
+	u := binary.BigEndian.Uint16
+	i := Info{PartWidth: int(u(b[10:])), RowWidth: int(u(b[12:])), DocOff: int(u(b[14:]))}
+	copy(i.Hash[:], b[32:64])
+	return i, binary.BigEndian.Uint64(b[16:]), binary.BigEndian.Uint64(b[24:]), i.check()
 }

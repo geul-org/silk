@@ -7,8 +7,6 @@ import (
 	"os"
 )
 
-// pinCurrent returns the pinned generation and its pin file; read is
-// readCurrent (tests pass a changing one).
 func pinCurrent(dir string, read func(string) (uint64, error)) (uint64, string, error) {
 	for range 10 {
 		g, err := read(dir)

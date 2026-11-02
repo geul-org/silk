@@ -1,13 +1,12 @@
-//ff:func feature=index type=helper control=iteration dimension=1
-//ff:what setRefs — an archive's sets as manifest SetRefs
+//ff:func feature=index type=builder control=iteration dimension=1
+//ff:what setRefs — the set generations of an archive
 package index
 
 import "github.com/geul-org/silk/pkg/archive"
 
-// setRefs records a's current generations.
-func setRefs(a *archive.Archive) []SetRef {
-	out := make([]SetRef, 0, len(a.Sets))
-	for _, s := range a.Sets {
+func setRefs(ar *archive.Archive) []SetRef {
+	out := make([]SetRef, 0, len(ar.Sets))
+	for _, s := range ar.Sets {
 		out = append(out, SetRef{Name: s.Name, Generation: s.Generation, Manifest: s.Manifest})
 	}
 	return out

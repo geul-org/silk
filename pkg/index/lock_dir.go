@@ -1,5 +1,5 @@
 //ff:func feature=index type=writer control=sequence
-//ff:what lockDir — take the index's writer lock (LOCK holding our process ID, created exclusively); a lock of a dead process is taken over; the release function
+//ff:what lockDir — take the writer lock (LOCK with our process ID, created exclusively; a dead process's lock is taken over); the release function
 package index
 
 import (
@@ -10,8 +10,6 @@ import (
 	"strings"
 )
 
-// lockDir allows one writer (build, update, compact) at a time. Readers do
-// not lock; they pin a generation.
 func lockDir(dir string) (func(), error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, err

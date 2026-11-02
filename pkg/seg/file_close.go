@@ -1,8 +1,9 @@
-//ff:func feature=seg type=reader control=sequence
-//ff:what File.Close — release the segment file
+//ff:func feature=seg type=writer control=sequence
+//ff:what File.Close — unmap
 package seg
 
-// Close closes the file.
+import "syscall"
+
 func (f *File) Close() error {
-	return f.c.Close()
+	return syscall.Munmap(f.b)
 }

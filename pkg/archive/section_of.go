@@ -7,7 +7,6 @@ import (
 	"fmt"
 )
 
-// sectionOf scans the n-entry section table after the manifest header for kind.
 func sectionOf(b []byte, n int, kind uint16) ([]byte, error) {
 	if n < 0 || len(b) < manifestHead+n*sectionSize {
 		return nil, fmt.Errorf("%w: section table truncated", ErrManifest)

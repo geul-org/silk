@@ -1,5 +1,5 @@
 //ff:func feature=index type=decoder control=sequence
-//ff:what parsePin — a pin file name "<generation>-<pid>-<nanotime>" as generation and process ID
+//ff:what parsePin — a pin file name as generation and process ID
 package index
 
 import (
@@ -7,7 +7,6 @@ import (
 	"strings"
 )
 
-// parsePin reads a pin name; false for anything else.
 func parsePin(name string) (uint64, int, bool) {
 	f := strings.Split(name, "-")
 	if len(f) != 3 {

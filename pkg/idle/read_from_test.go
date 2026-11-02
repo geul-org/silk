@@ -1,5 +1,5 @@
-//ff:func feature=idle type=reader control=sequence
-//ff:what TestReadFrom — a Sample from given files; missing files and a bad loadavg fail
+//ff:func feature=idle type=scanner control=sequence
+//ff:what TestReadFrom — files parse; missing or bad ones are ErrUnsupported; Read works on this machine or says so
 package idle
 
 import (
@@ -10,22 +10,29 @@ import (
 )
 
 func TestReadFrom(t *testing.T) {
-	d := t.TempDir()
-	la, mi := filepath.Join(d, "loadavg"), filepath.Join(d, "meminfo")
-	os.WriteFile(la, []byte("2.5 1 1 1/2 3\n"), 0o644)
-	os.WriteFile(mi, []byte("MemTotal: 4 kB\nMemAvailable: 2 kB\n"), 0o644)
-	s, err := readFrom(la, mi, 4)
-	if err != nil || s != (Sample{Load1: 2.5, CPUs: 4, MemTotal: 4096, MemAvail: 2048}) {
+	dir := t.TempDir()
+	l, m := filepath.Join(dir, "l"), filepath.Join(dir, "m")
+	os.WriteFile(l, []byte("1.50 0 0"), 0o644)
+	os.WriteFile(m, []byte("MemTotal: 10 kB\nMemAvailable: 5 kB\nx\nOther: 3 kB\n"), 0o644)
+	s, err := readFrom(l, m, 2)
+	if err != nil || s.Load1 != 1.5 || s.MemTotal != 10240 || s.MemAvail != 5120 || s.CPUs != 2 {
 		t.Fatal(s, err)
 	}
-	if _, err := readFrom(filepath.Join(d, "x"), mi, 4); !errors.Is(err, ErrUnsupported) {
+	if _, err := readFrom(filepath.Join(dir, "x"), m, 1); !errors.Is(err, ErrUnsupported) {
 		t.Fatal(err)
 	}
-	if _, err := readFrom(la, filepath.Join(d, "x"), 4); !errors.Is(err, ErrUnsupported) {
+	os.WriteFile(l, nil, 0o644)
+	if _, err := readFrom(l, m, 1); !errors.Is(err, ErrUnsupported) {
 		t.Fatal(err)
 	}
-	os.WriteFile(la, []byte(""), 0o644)
-	if _, err := readFrom(la, mi, 4); err == nil {
-		t.Fatal("bad loadavg")
+	os.WriteFile(l, []byte("x"), 0o644)
+	if _, err := readFrom(l, m, 1); !errors.Is(err, ErrUnsupported) {
+		t.Fatal(err)
+	}
+	if _, err := Read(); err != nil && !errors.Is(err, ErrUnsupported) {
+		t.Fatal(err)
+	}
+	if a, b := parseMeminfo(""); a != 0 || b != 0 {
+		t.Fatal(a, b)
 	}
 }

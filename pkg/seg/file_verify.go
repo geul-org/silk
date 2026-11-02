@@ -1,29 +1,33 @@
 //ff:func feature=seg type=rule control=iteration dimension=1
-//ff:what File.Verify — body SHA-256, row order of each partition (sorted runs), and the other partition grouped by keys absent from the table
+//ff:what File.Verify — the body hash and the order of partitions and rows
 package seg
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"fmt"
-	"io"
 )
 
-// Verify checks a segment against its footer.
 func (f *File) Verify() error {
-	h := sha256.New()
-	if _, err := io.Copy(h, io.NewSectionReader(f.r, 0, f.Info.Bytes-footerSize)); err != nil {
-		return err
+	end := uint64(len(f.b) - footerSize)
+	s := sha256.Sum256(f.b[:end])
+	if !bytes.Equal(s[:], f.b[end+64:end+96]) {
+		return fmt.Errorf("%w: %s hash", ErrFormat, f.Path)
 	}
-	if [32]byte(h.Sum(nil)) != f.Info.Sum {
-		return fmt.Errorf("%w: %s: body SHA-256", ErrFormat, f.Path)
-	}
-	for i := range f.Parts {
-		if err := f.checkOrder(Group{f: f, rg: f.partRegion(i)}, 0, f.Info.Sorted); err != nil {
+	var prev []byte
+	var next uint64
+	for i := uint64(0); i < f.Parts; i++ {
+		k, s, n := f.entry(i)
+		if i > 0 && bytes.Compare(k, prev) <= 0 || s != next || n == 0 {
+			return fmt.Errorf("%w: %s partition table", ErrFormat, f.Path)
+		}
+		prev, next = k, s+n
+		if err := f.checkRows(i); err != nil {
 			return err
 		}
 	}
-	if err := f.checkOrder(Group{f: f, rg: f.otherRegion()}, f.Info.PartWidth, f.Info.Sorted); err != nil {
-		return err
+	if next != f.Rows {
+		return fmt.Errorf("%w: %s row count", ErrFormat, f.Path)
 	}
-	return f.checkOther()
+	return nil
 }

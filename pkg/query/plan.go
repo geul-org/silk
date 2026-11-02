@@ -1,10 +1,21 @@
 //ff:type feature=query type=model
-//ff:what Plan — the query, each condition's plan and the stages for explanation
+//ff:what Plan — one condition on one section: partitions, key prefixes and whether rows alone decide
 package query
 
-// Plan is what NewPlan makes and Run follows.
+import (
+	"github.com/geul-org/silk/pkg/decl"
+	"github.com/geul-org/silk/pkg/sig"
+)
+
 type Plan struct {
-	Query Query
-	Conds []CondPlan
-	Steps []Step
+	Cond    *Cond
+	Name    string
+	Decl    decl.Decl
+	Parts   [][]byte
+	Prefix  [][]byte
+	Fixed   int
+	Covered bool
+	Pats    []sig.Pattern
+	Def     *sig.Def
+	Bits    []sig.Pattern
 }

@@ -1,16 +1,11 @@
-//ff:func feature=index type=helper control=iteration dimension=1
-//ff:what Index.Section — the section and spec tag of a TAG kind; false when the spec does not index it
+//ff:func feature=index type=reader control=sequence
+//ff:what Index.Section — a built bundle of a declaration; nil when it is not built
 package index
 
-import "github.com/geul-org/silk/pkg/spec"
-
-// Section finds the section whose TAG WORD is tag.
-func (ix *Index) Section(tag uint16) (int, spec.Tag, bool) {
-	for i, s := range ix.M.Sections {
-		if s.Tag == tag {
-			t, ok := ix.Spec.Find(tag)
-			return i, t, ok
-		}
+func (ix *Index) Section(name string, bundle int) *Sec {
+	ss := ix.secs[name]
+	if bundle >= len(ss) {
+		return nil
 	}
-	return 0, spec.Tag{}, false
+	return ss[bundle]
 }

@@ -1,11 +1,10 @@
-//ff:func feature=index type=helper control=sequence
-//ff:what Index.Path — the archive path of a document sequence number (`<Issuer>/0x<16 hex>/0x<8 hex>.geul`)
+//ff:func feature=index type=decoder control=sequence
+//ff:what Index.Path — the archive path of a document number
 package index
 
-import "fmt"
+import "github.com/geul-org/silk/pkg/archive"
 
-// Path names document doc.
-func (ix *Index) Path(doc uint32) string {
-	d := ix.Docs[doc]
-	return fmt.Sprintf("%s/0x%016x/0x%08x.geul", ix.M.Issuers[d.Issuer], d.ID, d.Version)
+func (ix *Index) Path(seq uint32) string {
+	e := ix.Docs.At(seq)
+	return archive.VersionPath(ix.Manifest.Issuers[e.Issuer], e.ID, e.Version)
 }

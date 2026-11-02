@@ -1,24 +1,46 @@
-// Package sig is SILK's entity signature: a fixed-width bit string per entity
-// (16, 32, 64, 128… bits, declared per index) whose fields a schema declares —
-// enumeration codes (one value), one-hot bits and Bloom bits (several values),
-// prefix codes (hierarchies) and range buckets (numbers, times). A query
-// becomes a mask and pattern tested over a column of signatures in one fused
-// pass. Signatures are an approximate first filter; exact checks follow.
-//
-// This first step implements enumeration and one-hot fields. Declaring a
-// schema as a GEUL document (and pointing an index at its content hash),
-// Bloom, prefix and bucket fields and packed 16/32-bit columns are TODO.
+// Package sig is the SILK definition: the bit fields of a semantic row, the
+// reserved codes, the encoder that spreads several values into several rows,
+// and the query patterns that jump through a sorted array of such rows.
+// Field order is bit order and so sort order. See docs/silk.md.
 package sig
 
+import "errors"
+
 const (
-	// Enum stores one value as a code (0 = no value, Other = unlisted).
-	Enum FieldKind = iota + 1
-	// OneHot sets one bit per listed value present (several values).
-	OneHot
-	// Bloom hashes values into the field's bits (TODO).
-	Bloom
-	// Prefix stores a hierarchical code whose prefixes match ancestors (TODO).
-	Prefix
-	// Bucket stores the range bucket of a number or time (TODO).
-	Bucket
+	// Reserved codes of every enum, prefix and bucket field.
+	CodeNone      = 0 // no statement
+	CodeNoValue   = 1 // novalue
+	CodeSomeValue = 2 // somevalue
+	CodeOther     = 3 // outside the list
+	firstCode     = 4
+
+	// MaxExpand bounds the rows of one entity before spreading is limited to one field.
+	MaxExpand = 3
+
+	wordNoValue    = "\x00\x02"
+	wordSomeValue  = "\x00\x01"
+	rankDeprecated = 2
+)
+
+// ErrDef means a definition cannot be read.
+var ErrDef = errors.New("silk/sig: bad definition")
+
+// ErrCond means a query condition does not fit the definition.
+var ErrCond = errors.New("silk/sig: bad condition")
+
+const (
+	KindEnum Kind = iota
+	KindFlag
+	KindPrefix
+	KindBucket
+)
+
+const (
+	tagSigned    = 0x0801
+	tagUnsigned  = 0x0802
+	tagGregorian = 0x0820
+	tagEDTF      = 0x0824
+	tagEDTFOdd   = 0x0825
+	tagGEDCOM    = 0x0826
+	tagGEDCOMOdd = 0x0827
 )

@@ -1,5 +1,5 @@
 //ff:func feature=index type=writer control=iteration dimension=1
-//ff:what collect — remove index files no current or pinned generation names (and no compaction checkpoint keeps); the number removed
+//ff:what collect — remove index files no current or pinned generation names
 package index
 
 import (
@@ -7,9 +7,7 @@ import (
 	"path/filepath"
 )
 
-// collect is the garbage collector run after each commit. Old segments stay
-// while a reader pins their generation.
-func collect(dir string, m Manifest) int {
+func collect(dir string, m Manifest) {
 	keep := map[string]bool{}
 	refs(m, keep)
 	for g := range pinnedGens(dir) {
@@ -17,11 +15,8 @@ func collect(dir string, m Manifest) int {
 			refs(pm, keep)
 		}
 	}
-	keepCheckpoint(dir, keep)
-	n := 0
-	for _, sub := range []string{dirManifest, dirSeg, dirDoc, dirLive, dirSpec} {
+	for _, sub := range []string{dirManifest, dirSeg, dirDoc, dirLive, dirDecl, dirGrammar} {
 		es, _ := os.ReadDir(filepath.Join(dir, sub))
-		n += removeUnkept(dir, sub, es, keep)
+		removeUnkept(dir, sub, es, keep)
 	}
-	return n
 }

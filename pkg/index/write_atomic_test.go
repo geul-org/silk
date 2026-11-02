@@ -1,5 +1,5 @@
-//ff:func feature=index type=writer control=sequence
-//ff:what TestWriteAtomic — bytes land at path; a blocked directory, an unwritable temporary path and a full device fail
+//ff:func feature=index type=scanner control=sequence
+//ff:what TestWriteAtomic — files appear whole; a path under a file or a directory in the way fails
 package index
 
 import (
@@ -9,27 +9,31 @@ import (
 )
 
 func TestWriteAtomic(t *testing.T) {
-	d := t.TempDir()
-	p := filepath.Join(d, "a", "f")
-	if n, err := writeAtomic(p, []byte("xy")); err != nil || n != 2 {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "a", "b")
+	if err := writeAtomic(p, []byte("x")); err != nil {
 		t.Fatal(err)
 	}
-	if b, _ := os.ReadFile(p); string(b) != "xy" {
-		t.Fatal(string(b))
+	if err := writeAtomic(filepath.Join(p, "c"), nil); err == nil {
+		t.Fatal("under a file")
 	}
-	block(d, "b")
-	if _, err := writeAtomic(filepath.Join(d, "b", "f"), nil); err == nil {
-		t.Fatal("blocked directory")
+	os.Mkdir(filepath.Join(dir, "d.tmp"), 0o755)
+	if err := writeAtomic(filepath.Join(dir, "d"), nil); err == nil {
+		t.Fatal("tmp is a directory")
 	}
-	os.Mkdir(filepath.Join(d, "c.tmp"), 0o755)
-	if _, err := writeAtomic(filepath.Join(d, "c"), nil); err == nil {
-		t.Fatal("temporary path is a directory")
+	os.Mkdir(filepath.Join(dir, "e"), 0o755)
+	os.WriteFile(filepath.Join(dir, "e", "x"), nil, 0o644)
+	if err := writeAtomic(filepath.Join(dir, "e"), nil); err == nil {
+		t.Fatal("rename over a full directory")
 	}
-	if _, err := os.Stat("/dev/full"); err != nil {
-		t.Skip("no /dev/full")
+	b := Manifest{}
+	if err := commit(filepath.Join(p, "x"), &b); err == nil {
+		t.Fatal("commit under a file")
 	}
-	os.Symlink("/dev/full", filepath.Join(d, "full.tmp"))
-	if _, err := writeAtomic(filepath.Join(d, "full"), []byte("x")); err == nil {
-		t.Fatal("full device")
+	os.WriteFile(filepath.Join(dir, currentFile+".tmp"), nil, 0o644)
+	os.Mkdir(filepath.Join(dir, currentFile), 0o755)
+	os.WriteFile(filepath.Join(dir, currentFile, "x"), nil, 0o644)
+	if err := commit(dir, &b); err == nil {
+		t.Fatal("CURRENT cannot be replaced")
 	}
 }

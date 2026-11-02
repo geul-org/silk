@@ -1,5 +1,5 @@
 //ff:func feature=seg type=writer control=sequence
-//ff:what NewWriter — start a segment at path (written to path.tmp until Finish) with the given TAG, key widths, sorted flag and spec hash
+//ff:what NewWriter — start a segment at path (written to path.tmp until Finish)
 package seg
 
 import (
@@ -9,15 +9,21 @@ import (
 	"path/filepath"
 )
 
-// NewWriter creates the temporary file; info's counts and Sum are ignored.
-func NewWriter(path string, info Info, min int) (*Writer, error) {
+func NewWriter(path string, info Info) (*Writer, error) {
+	if err := info.check(); err != nil {
+		return nil, err
+	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return nil, err
 	}
-	f, err := os.OpenFile(path+".tmp", os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
+	f, err := os.Create(path + ".tmp")
 	if err != nil {
 		return nil, err
 	}
-	info.Parts, info.Rows, info.Other, info.Sum, info.Bytes = 0, 0, 0, [32]byte{}, 0
-	return &Writer{Path: path, Min: min, info: info, f: f, bw: bufio.NewWriterSize(f, 1<<20), h: sha256.New()}, nil
+	tf, err := os.Create(path + ".tbl")
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+	return &Writer{info: info, path: path, f: f, tf: tf, bw: bufio.NewWriterSize(f, bufSize), tw: bufio.NewWriterSize(tf, 1<<16), sum: sha256.New(), last: make([]byte, info.RowWidth)}, nil
 }

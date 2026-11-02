@@ -1,11 +1,11 @@
 //ff:type feature=seg type=model
-//ff:what cursor — a sequential reader over one Group's rows, chunk by chunk
+//ff:what cursor — a merge input: one segment walked partition by partition
 package seg
 
-// cursor yields rows (partition slot stripped) of g.
 type cursor struct {
-	g    Group
-	buf  []byte
+	f    *File
+	part uint64
+	key  []byte
+	reg  Region
 	i    int
-	read uint64
 }

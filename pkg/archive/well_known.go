@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 )
 
-// wellKnown returns dir/.well-known/geul when it is a directory, else dir.
 func wellKnown(dir string) string {
 	wk := filepath.Join(dir, ".well-known", "geul")
 	if fi, err := os.Stat(wk); err == nil && fi.IsDir() {

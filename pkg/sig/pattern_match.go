@@ -1,11 +1,10 @@
-//ff:func feature=sig type=matcher control=iteration dimension=1
-//ff:what Pattern.match — every word of a signature agrees with Want under Mask
+//ff:func feature=sig type=rule control=iteration dimension=1
+//ff:what Pattern.Match — every term holds on these bits
 package sig
 
-// match tests one signature.
-func (p Pattern) match(s []uint64) bool {
-	for i, m := range p.Mask {
-		if s[i]&m != p.Want[i] {
+func (p Pattern) Match(bits []byte) bool {
+	for _, t := range p.Terms {
+		if !allows(t.Spans, get(bits, t.Off, t.Width)) {
 			return false
 		}
 	}

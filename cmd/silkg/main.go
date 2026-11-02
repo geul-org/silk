@@ -1,13 +1,18 @@
 //ff:func feature=cli type=command control=sequence
-//ff:what silkg CLI entry point — run the command line and exit with its code
+//ff:what main — run silkg until Ctrl-C and exit with its code
 package main
 
 import (
+	"context"
 	"os"
+	"os/signal"
 
 	"github.com/geul-org/silk/internal/cli"
 )
 
 func main() {
-	exit(cli.Run(os.Args[1:], os.Stdout, os.Stderr))
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	code := cli.Run(ctx, os.Args[1:], os.Stdin, os.Stdout, os.Stderr)
+	stop()
+	os.Exit(code)
 }

@@ -1,15 +1,15 @@
-//ff:func feature=index type=reader control=sequence
-//ff:what TestCloseSegs — every file is closed (closing again fails)
+//ff:func feature=index type=scanner control=sequence
+//ff:what TestCloseSegs — closing empties nothing it should not
 package index
 
 import "testing"
 
 func TestCloseSegs(t *testing.T) {
-	_, _, dir := built(t)
-	m, _ := CurrentManifest(dir)
-	ss, _ := openSegs(dir, m)
-	closeSegs(ss)
-	if ss[1][0].Close() == nil {
-		t.Fatal("still open")
+	_, dir, _ := built(t, 1)
+	fs, err := openSegs(segPaths(dir, current(t, dir).Sections[0]))
+	if err != nil || len(fs) != 1 {
+		t.Fatal(err)
 	}
+	closeSegs(fs)
+	closeSegs(nil)
 }

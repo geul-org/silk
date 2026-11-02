@@ -1,10 +1,14 @@
 //ff:func feature=index type=reader control=sequence
-//ff:what CurrentManifest — the manifest CURRENT names; ErrNoIndex when the directory has no index
+//ff:what currentManifest — the current manifest, or an empty one for a new index
 package index
 
-// CurrentManifest reads the live generation of dir.
-func CurrentManifest(dir string) (Manifest, error) {
+import "errors"
+
+func currentManifest(dir string) (Manifest, error) {
 	g, err := readCurrent(dir)
+	if errors.Is(err, ErrNoIndex) {
+		return Manifest{Version: manifestVersion, Paths: Section{Name: "paths"}}, nil
+	}
 	if err != nil {
 		return Manifest{}, err
 	}

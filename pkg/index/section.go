@@ -1,14 +1,12 @@
 //ff:type feature=index type=model
-//ff:what Section — one TAG kind's segments: name, TAG WORD, tag spec hash, sorted runs, appended segments, dead rows they still hold
+//ff:what Section — one bundle of a declaration: its sorted runs and append array
 package index
 
-// Section holds the index entries of one spec tag. Dead counts rows whose
-// document version is no longer live; merges drop them.
 type Section struct {
 	Name    string   `json:"name"`
-	Tag     uint16   `json:"tag"`
-	Hash    string   `json:"hash"`
-	Runs    []SegRef `json:"runs"`
-	Appends []SegRef `json:"appends"`
-	Dead    uint64   `json:"dead"`
+	Decl    string   `json:"decl"`
+	Bundle  int      `json:"bundle"`
+	Pending bool     `json:"pending,omitempty"`
+	Runs    []SegRef `json:"runs,omitempty"`
+	Appends []SegRef `json:"appends,omitempty"`
 }

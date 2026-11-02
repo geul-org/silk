@@ -1,41 +1,30 @@
 //ff:func feature=cli type=command control=selection
-//ff:what runIndex — `silkg index build|update|add|compact|verify|stat|spec`
+//ff:what runIndex — the index subcommands
 package cli
 
-import (
-	"fmt"
-	"io"
-)
+import "fmt"
 
-// runIndex parses the shared flags and runs the subcommand.
-func runIndex(args []string, stdout, stderr io.Writer) int {
+func runIndex(e *env, args []string) error {
 	if len(args) == 0 {
-		fmt.Fprint(stderr, usageText)
-		return 2
+		return fmt.Errorf("index build|update|compact|verify|stat")
 	}
-	if args[0] == "spec" {
-		return indexSpec(stdout)
+	f := newFlags("index", e.err)
+	pos, err := f.parseArgs(args[1:])
+	if err != nil {
+		return err
 	}
-	var f indexFlags
-	fs := newIndexFlags(args[0], stderr, &f)
-	if fs.Parse(args[1:]) != nil || fs.NArg() != 1 {
-		fmt.Fprint(stderr, usageText)
-		return 2
+	if len(pos) != 1 {
+		return fmt.Errorf("index %s ARCHIVE", args[0])
 	}
-	arch, dir := fs.Arg(0), indexDir(f.dir, fs.Arg(0))
 	switch args[0] {
-	case "build":
-		return indexBuild(arch, dir, f, stdout, stderr)
-	case "update", "add":
-		return indexUpdate(arch, dir, f, stdout, stderr)
+	case "build", "update":
+		return e.write(f, pos[0], args[0] == "build")
 	case "compact":
-		return compactCmd(dir, f, stdout, stderr)
+		return e.compact(f, pos[0])
 	case "verify":
-		return indexVerify(arch, dir, stdout, stderr)
+		return e.verify(f, pos[0])
 	case "stat":
-		return indexStat(dir, stdout, stderr)
-	default:
-		fmt.Fprintf(stderr, "silkg: unknown index command %q\n\n%s", args[0], usageText)
-		return 2
+		return e.stat(f, pos[0])
 	}
+	return fmt.Errorf("index: unknown command %q", args[0])
 }

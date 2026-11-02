@@ -1,85 +1,78 @@
 # Segment format (`.sseg`, version 1)
 
-A segment holds index entries (rows) of **one TAG kind**, grouped by partition
-key. It is written once — through `<name>.tmp`, synced, renamed — and never
-changed. Integers are big-endian (like GEUL); comparing rows as bytes orders
-them by (sort slot, document sequence number, record offset).
-
-## Rows
-
-| Region | Row |
-|---|---|
-| partition rows | sort slot (`SortWidth` B) · document u32 · offset u32 |
-| other rows | partition slot (`PartWidth` B) · sort slot · document u32 · offset u32 |
-
-The document is a sequence number of the index's document table (one per
-indexed document *version*); the offset is the record's byte offset inside
-that document. A partition with at least `min_partition` rows has its own
-table entry; smaller ones are kept in the *other* partition, grouped by
-partition key in ascending order. A key is either in the table or in the
-other partition, never both.
-
-A **sorted run** (flag bit 0 set) has every partition's rows, and the other
-rows, in ascending byte order: a lookup is a binary search with one `ReadAt`
-per probe. An **appended segment** keeps rows in arrival order inside each
-partition (partitions and other-partition keys are still in key order): a
-lookup scans the partition.
-
-## Layout
+A segment holds the rows of one bundle of one section. It is written once,
+through `<name>.tmp`, and never changed. Integers are big-endian.
 
 | Part | Size |
 |---|---:|
-| partition rows, partition by partition in key order | `Rows · (SortWidth+8)` |
-| other rows | `Other · (PartWidth+SortWidth+8)` |
-| partition table: key slot, start u64, count u64 | `Parts · (PartWidth+16)` |
+| rows, partition by partition | `Rows · RowWidth` |
+| partition table: key, first row u64, row count u64 | `Parts · (PartWidth+16)` |
 | footer | 128 |
 
-The file size must equal the sum exactly. Table entries ascend strictly by
-key; their row ranges start at 0, are contiguous, non-empty and cover all
-partition rows.
+The file size must equal the sum exactly. Rows ascend as bytes inside a
+partition; partition keys ascend strictly. A section without partitions has one
+entry with an empty key. While writing, the table goes to `<name>.tbl`, so a
+high-cardinality partition key costs no memory.
 
-### Footer (128 bytes)
+## Footer
 
 | Offset | Size | Field |
 |---:|---:|---|
-| 0 | 8 | magic `SILKSEG1` |
+| 0 | 8 | magic `SILKSEG2` |
 | 8 | 2 | version = 1 |
-| 10 | 2 | flags: bit 0 = sorted run |
-| 12 | 2 | TAG WORD with only Kind and Codec bits (`tag & 0x187F`) |
-| 14 | 2 | `PartWidth` (0 = one partition with the empty key) |
-| 16 | 2 | `SortWidth` (0 = no sort key) |
-| 18 | 2 | reserved, 0 |
-| 20 | 4 | `Parts`, table entries |
-| 24 | 8 | `Rows`, partition rows |
-| 32 | 8 | `Other`, other rows |
-| 40 | 32 | SHA-256 of the tag's spec (`Tag.Hash`) |
-| 72 | 32 | SHA-256 of every byte before the footer |
-| 104 | 16 | reserved, 0 |
-| 120 | 8 | magic `SILKSEG1` |
+| 10 | 2 | `PartWidth` |
+| 12 | 2 | `RowWidth` |
+| 14 | 2 | `DocOff`, where the document number lies in a row |
+| 16 | 8 | `Parts` |
+| 24 | 8 | `Rows` |
+| 32 | 32 | SHA-256 of the declaration |
+| 64 | 32 | SHA-256 of rows and table |
+| 96 | 24 | reserved, 0 |
+| 120 | 8 | magic `SILKSEG2` |
+
+## Rows by kind
+
+| Kind | Row | `DocOff` |
+|---|---|---:|
+| index | key slots, document u32, offset u32 | sum of slot widths |
+| silk, value order | bits, document u32 | bits/8 |
+| silk, document order | document u32, bits | 0 |
+| text | text 8, document u32, QID u32 | 8 |
+| composite | text 8, meaning 4, QID u32, document u32 | 16 |
+| paths (internal) | Issuer u32, document ID u64, version u32, document u32 | 16 |
+
+The document number is a row of the document table; the offset is the record's
+byte offset in the *unpacked* document.
+
+The QID word holds the Subject's Reference codec (WIKIDATA-QID 4, WIKIDATA-PID
+5) in its top 4 bits and the ID in the low 28. Anything else, including an ID
+that does not fit, is 0 and the Subject is read from the document. The grammar
+has no Lexeme Reference, so Lexemes are 0.
+
+Rows without an offset are made distinct per document, so byte-equal rows of
+one document appear once.
+
+## Key slots
+
+| Field | Slot |
+|---|---|
+| record | first W bytes, zero padded |
+| raw, n words | 2n bytes |
+| rest of a record | first W-1 bytes, zero padded, last byte 00 whole or FF cut |
+| missing | all zero |
+
+Text keys of text and composite rows are the plain first 8 bytes, zero padded.
+The grammar allows U+0000 in text, so a text of 8 bytes or fewer is not known
+whole from its key: rows of these sections are always candidates, and the
+answer comes from the document.
 
 ## Lookup
 
-`Select(part, sort)`:
-
-- with a partition key: its table partition, or else its slice of the other
-  partition (prefix = partition slot ‖ sort slot);
-- without: every table partition, then the other partition compared at the
-  sort slot's offset;
-- with a sort key, sorted runs binary-search the prefix; appended segments
-  compare each row.
-
-Rows whose document version is not live are skipped by the caller (the live
-bitmap, docs/index.md).
+`File.Part` is a binary search of the table; `Region.Prefix` two binary searches
+of the rows. Readers map the file; nothing is loaded.
 
 ## Writing and merging
 
-The writer takes partitions in key order (`Begin`, `Add`, `End`). It buffers a
-partition until it reaches `min_partition` rows, then streams it; a partition
-that ends smaller goes to the other partition. Merging (`Merge`) walks the
-groups of all inputs in key order — each input's table partitions and its
-other-partition keys — and, per key, streams a k-way merge of sorted inputs
-or gathers and sorts in memory when an input is an appended segment; rows of
-dead versions are dropped. The writer can be checkpointed between partitions
-(`Checkpoint`/`Suspend`: bytes written, table so far, other rows, SHA-256
-state) and resumed in another process (`ResumeWriter`, which cuts the
-temporary file back to the checkpoint).
+`Writer` streams rows in order. `Buffer` holds rows in memory and sorts them
+(an index of offsets, 4 bytes a row). `Merge` is a k-way merge that drops rows
+of dead documents and calls a pause hook every 2^20 rows.

@@ -1,9 +1,8 @@
 //ff:type feature=sig type=model
-//ff:what Pattern — a signature test: sig AND Mask equals Want, word by word
+//ff:what Pattern — terms in bit order; a row matches when every term holds
 package sig
 
-// Pattern accepts a signature s when s[i]&Mask[i] == Want[i] for every word.
 type Pattern struct {
-	Mask []uint64
-	Want []uint64
+	Bits  int
+	Terms []Term
 }

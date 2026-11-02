@@ -1,5 +1,5 @@
-//ff:func feature=cli type=command control=iteration dimension=1
-//ff:what TestRunIndex — every subcommand dispatches; missing subcommand, bad flags, missing archive and unknown subcommands are usage errors
+//ff:func feature=cli type=scanner control=iteration dimension=1
+//ff:what TestRunIndex — dispatch of each subcommand and its usage errors
 package cli
 
 import (
@@ -8,18 +8,20 @@ import (
 )
 
 func TestRunIndex(t *testing.T) {
-	data := packedIndex(t)
-	for _, c := range []string{"update", "add", "compact", "verify", "stat"} {
-		if code, _, e := call("index " + c + " " + data); code != 0 {
-			t.Fatal(c, e)
+	e, o := testEnv("")
+	data, ix := project(t)
+	a := func(s ...string) []string { return append(s, append(ix, data)...) }
+	for _, x := range [][]string{a("build", "-mem", "8M"), a("update", "-mem", "8M"), a("compact", "-mem", "8M"), a("verify", "-mem", "8M"), a("stat")} {
+		if err := runIndex(e, x); err != nil {
+			t.Fatal(x, err)
 		}
 	}
-	if code, o, _ := call("index spec"); code != 0 || !strings.Contains(o, "TRIPLE") {
-		t.Fatal(code)
+	if !strings.Contains(o.String(), "generation") {
+		t.Fatal(o)
 	}
-	for _, a := range []string{"", "build", "build -x " + data, "nope " + data} {
-		if code := runIndex(strings.Fields(a), &strings.Builder{}, &strings.Builder{}); code != 2 {
-			t.Fatal(a, code)
+	for _, x := range [][]string{{}, {"build", "-nope"}, {"build"}, a("nope")} {
+		if err := runIndex(e, x); err == nil {
+			t.Fatal(x)
 		}
 	}
 }

@@ -1,5 +1,5 @@
 //ff:func feature=archive type=decoder control=sequence
-//ff:what parseHexWidth — `0x` and exactly n lowercase hex digits as a number
+//ff:what parseHexWidth — `0x` then exactly n lower-case hex digits
 package archive
 
 import (
@@ -7,12 +7,10 @@ import (
 	"strings"
 )
 
-// parseHexWidth reads s as `0x` plus n lowercase hex digits.
 func parseHexWidth(s string, n int) (uint64, bool) {
-	h, ok := strings.CutPrefix(s, "0x")
-	if !ok || len(h) != n || strings.ToLower(h) != h {
+	if len(s) != n+2 || !strings.HasPrefix(s, "0x") || strings.ToLower(s) != s {
 		return 0, false
 	}
-	v, err := strconv.ParseUint(h, 16, 64)
+	v, err := strconv.ParseUint(s[2:], 16, 64)
 	return v, err == nil
 }

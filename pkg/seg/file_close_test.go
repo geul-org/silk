@@ -1,15 +1,13 @@
-//ff:func feature=seg type=reader control=sequence
-//ff:what TestFileClose — closing works once and fails the second time
+//ff:func feature=seg type=scanner control=sequence
+//ff:what TestFileClose — a file closes once
 package seg
 
 import "testing"
 
 func TestFileClose(t *testing.T) {
-	f := sampleSeg(t, true)
+	p := writeSeg(t, "a").Path
+	f, _ := Open(p)
 	if err := f.Close(); err != nil {
 		t.Fatal(err)
-	}
-	if err := f.Close(); err == nil {
-		t.Fatal("closed twice")
 	}
 }

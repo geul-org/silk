@@ -1,12 +1,13 @@
-//ff:func feature=seg type=reader control=sequence
-//ff:what advance — a cursor's next row, nil at its end
+//ff:func feature=seg type=scanner control=sequence
+//ff:what advance — step the top cursor and restore the heap
 package seg
 
-// advance wraps cursor.next for the merge loop.
-func advance(c *cursor) ([]byte, error) {
-	row, ok, err := c.next()
-	if !ok {
-		return nil, err
+import "container/heap"
+
+func advance(h *curHeap, c *cursor) {
+	if c.next() {
+		heap.Fix(h, 0)
+		return
 	}
-	return row, nil
+	heap.Pop(h)
 }

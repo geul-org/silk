@@ -1,5 +1,5 @@
-//ff:func feature=index type=writer control=iteration dimension=1
-//ff:what TestCollect — unreferenced files go; files of the current and pinned generations and paused outputs stay; a pin of a lost manifest keeps nothing
+//ff:func feature=index type=scanner control=iteration dimension=1
+//ff:what TestCollect — files of no generation go; pinned generations stay
 package index
 
 import (
@@ -9,27 +9,36 @@ import (
 )
 
 func TestCollect(t *testing.T) {
-	d := t.TempDir()
-	touch := func(rel string) {
-		os.MkdirAll(filepath.Dir(filepath.Join(d, rel)), 0o755)
-		os.WriteFile(filepath.Join(d, rel), nil, 0o644)
+	dir := t.TempDir()
+	m := Manifest{Live: "live/a", Grammar: "g", Docs: []DocFile{{File: "doc/a"}}, Paths: Section{Runs: []SegRef{{File: "seg/a"}}}, Sections: []Section{{Decl: "d", Appends: []SegRef{{File: "seg/b"}}}}}
+	if err := commit(dir, &m); err != nil {
+		t.Fatal(err)
 	}
-	old := Manifest{Sections: []Section{{Runs: []SegRef{{File: "seg/old"}}}}}
-	commit(d, &old)
-	cur := Manifest{Generation: 1, Sections: []Section{{Runs: []SegRef{{File: "seg/new"}}}}}
-	commit(d, &cur)
-	for _, f := range []string{"seg/old", "seg/new", "seg/gone", "seg/out.tmp", "doc/x"} {
-		touch(f)
+	old := m
+	old.Paths.Runs = []SegRef{{File: "seg/old"}}
+	if err := commit(dir, &old); err != nil {
+		t.Fatal(err)
 	}
-	writeCheckpoints(d, []checkpoint{{Output: "seg/out"}})
-	pinGen(d, 1)
-	pinGen(d, 9)
-	if n := collect(d, cur); n != 2 {
-		t.Fatal(n)
+	for _, f := range []string{"live/a", "doc/a", "seg/a", "seg/b", "seg/old", "seg/stray", "decl/d.json", "grammar/g.json"} {
+		os.MkdirAll(filepath.Dir(filepath.Join(dir, f)), 0o755)
+		os.WriteFile(filepath.Join(dir, f), nil, 0o644)
 	}
-	for f, want := range map[string]bool{"seg/old": true, "seg/new": true, "seg/out.tmp": true, "seg/gone": false, "doc/x": false} {
-		if _, err := os.Stat(filepath.Join(d, f)); (err == nil) != want {
-			t.Fatal(f)
-		}
+	pinGen(dir, 2)
+	os.WriteFile(filepath.Join(dir, dirPin, "9-1-1"), nil, 0o644)
+	collect(dir, m)
+	has := func(f string) bool { _, err := os.Stat(filepath.Join(dir, f)); return err == nil }
+	if has("seg/stray") || !has("seg/old") || !has("seg/a") || !has("seg/b") || !has("decl/d.json") {
+		t.Fatal("collect")
+	}
+	keep := map[string]bool{}
+	refs(m, keep)
+	addSegs(keep, []SegRef{{File: "x"}})
+	if !keep["x"] || !keep["doc/a"] {
+		t.Fatal(keep)
+	}
+	es, _ := os.ReadDir(filepath.Join(dir, dirDoc))
+	removeUnkept(dir, dirDoc, es, map[string]bool{})
+	if has("doc/a") {
+		t.Fatal("removeUnkept")
 	}
 }

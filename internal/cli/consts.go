@@ -1,29 +1,21 @@
-// Package cli is the silkg command line: argument parsing and output only.
-// Building, updating, compacting and querying the index are pkg/index and
-// pkg/query.
+// Package cli is the silkg command line: argument handling and printing only.
 package cli
 
-// usageText is printed by `silkg help` and on a usage error.
-const usageText = `silkg — query engine for GEUL pack archives (early development)
-
-Usage:
-  silkg index build   [-index DIR] [-spec FILE] [-threads N] ARCHIVE
-  silkg index update  [-index DIR] [-spec FILE] [-compact] ARCHIVE   (also: add)
-  silkg index compact [-index DIR] [-full] [-idle] [-dry] [-threads N] ARCHIVE
-  silkg index verify  [-index DIR] ARCHIVE
-  silkg index stat    [-index DIR] ARCHIVE
-  silkg index spec    (print the default index specification)
-  silkg query [-index DIR] [-threads N] [-count] [-explain]
-              (-triple P=O | -match KIND:PATH=VALUE[,PATH=VALUE] | -label LANG)... ARCHIVE
-
-ARCHIVE is a data folder holding .well-known/geul/ (or that directory) packed
-with records stored raw: GEULCOMPRESS=none geul pack build -o ARCHIVE SRC.
-The index defaults to ARCHIVE/.silk. Without -spec, build uses the default
-spec and update keeps the index's spec. A -triple condition is PRED=OBJ with
-tokens Qn, Pn, #n or * (any); -match names an Edge kind (TRIPLE, LABEL, ...)
-and field paths (1, 2.0) with tokens Qn, Pn, #n, @LANG or 0x<record hex>;
--label LANG is -match LABEL:2.0=@LANG. All conditions must hold in one
-document. compact -idle waits for an idle machine (load and memory leave 30%
-free) and pauses between partitions while it is busy; Ctrl-C saves a
-checkpoint that the next compact resumes.
+const (
+	exitOK    = 0
+	exitError = 1
+	exitUsage = 2
+	usage     = `usage:
+  silkg create index NAME TAG [-part PATH] [-key PATH,…] [-width W,…] [-index DIR] [-grammar DIR] ARCHIVE
+  silkg create text NAME TAG [-index DIR] [-grammar DIR] ARCHIVE
+  silkg create silk NAME -def FILE [-index DIR] [-grammar DIR] ARCHIVE
+  silkg create composite NAME TAG -def FILE [-index DIR] [-grammar DIR] ARCHIVE
+  silkg drop NAME [-index DIR] ARCHIVE
+  silkg list [-index DIR] ARCHIVE
+  silkg index build|update -mem SIZE [-threads N] [-append-rows N] [-index DIR] ARCHIVE
+  silkg index compact -mem SIZE [-full] [-runs-per-tier N] [-stale-ratio R] [-idle-cpu R -idle-mem R] [-index DIR] ARCHIVE
+  silkg index verify -mem SIZE [-threads N] [-index DIR] ARCHIVE
+  silkg index stat [-index DIR] ARCHIVE
+  silkg query [-index-name NAME] [-docs|-records|-keys] [-explain] [-scan] [-batch] [-doc-cache SIZE] [-index DIR] COND… ARCHIVE
 `
+)

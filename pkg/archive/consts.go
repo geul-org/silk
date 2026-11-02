@@ -1,8 +1,10 @@
-// Package archive opens a GEUL pack archive for indexing: its sets, their data
-// packs as local files and the version documents each data pack stores. It
-// reads through gogeul's pkg/pack and accepts only records stored raw, since
-// a record map points into data pack bytes.
+// Package archive opens a GEUL pack archive for indexing and querying: its
+// sets at their latest generation, their data packs, a step-by-step replay of
+// each pack's inventory, and single documents by location. Nothing here holds
+// a whole set's paths in memory; zstd and raw records take the same path.
 package archive
+
+import "errors"
 
 const (
 	manifestMagic = "GEULMANI"
@@ -10,6 +12,11 @@ const (
 	sectionSize   = 24 // section table entry
 	objectSize    = 48 // OBJECTS entry
 	secObjects    = 0x0001
-	kindData      = 1
-	encRaw        = 0
+)
+
+var (
+	// ErrNotPacked means the directory holds no pack set.
+	ErrNotPacked = errors.New("silk/archive: not a pack archive")
+	// ErrManifest means a pack manifest breaks its format.
+	ErrManifest = errors.New("silk/archive: bad pack manifest")
 )

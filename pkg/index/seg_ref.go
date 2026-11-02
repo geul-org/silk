@@ -1,10 +1,9 @@
 //ff:type feature=index type=model
-//ff:what SegRef — a segment file of a section: relative path, rows (partitions and other), bytes
+//ff:what SegRef — one segment of a section
 package index
 
-// SegRef names a segment in a manifest.
 type SegRef struct {
 	File  string `json:"file"`
 	Rows  uint64 `json:"rows"`
-	Bytes int64  `json:"bytes"`
+	Bytes uint64 `json:"bytes"`
 }

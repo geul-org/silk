@@ -1,19 +1,17 @@
-//ff:func feature=index type=reader control=iteration dimension=1
-//ff:what Index.Close — close segments and data packs and release the generation's pin
+//ff:func feature=index type=writer control=iteration dimension=1
+//ff:what Index.Close — unmap and release the pin
 package index
 
 import "os"
 
-// Close releases ix.
-func (ix *Index) Close() error {
-	closeSegs(ix.Segs)
-	for _, f := range ix.packs {
-		if f != nil {
-			f.Close()
+func (ix *Index) Close() {
+	for _, ss := range ix.secs {
+		for _, s := range ss {
+			closeSegs(s.Files)
 		}
 	}
-	if ix.pin != "" {
-		return os.Remove(ix.pin)
+	if ix.Docs != nil {
+		ix.Docs.Close()
 	}
-	return nil
+	os.Remove(ix.pin)
 }

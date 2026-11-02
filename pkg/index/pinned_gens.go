@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 )
 
-// pinnedGens reads pin/ names "<gen>-<pid>-<time>".
 func pinnedGens(dir string) map[uint64]bool {
 	out := map[uint64]bool{}
 	es, _ := os.ReadDir(filepath.Join(dir, dirPin))

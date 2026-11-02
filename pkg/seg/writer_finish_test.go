@@ -1,30 +1,43 @@
-//ff:func feature=seg type=writer control=sequence
-//ff:what TestWriterFinish — the finished file opens with the same Info and size; a failing file is removed and reported
+//ff:func feature=seg type=scanner control=sequence
+//ff:what TestWriterFinish — table failure, copy failure and sync failure abort; an empty segment is valid
 package seg
 
 import (
+	"bufio"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestWriterFinish(t *testing.T) {
-	p := filepath.Join(t.TempDir(), "a.sseg")
-	w, _ := NewWriter(p, Info{Tag: 7, PartWidth: 2, SortWidth: 2, Sorted: true}, 1)
-	w.Begin([]byte("aa"))
-	w.Add(row("k1", 1, 0))
-	w.End()
-	info, err := w.Finish()
-	f, err2 := Open(p)
-	if err != nil || err2 != nil || f.Info != info || info.Bytes != w.Written() || info.Parts != 1 {
-		t.Fatal(err, err2, info)
+	p := filepath.Join(t.TempDir(), "empty")
+	w, _ := NewWriter(p, testInfo())
+	if n, err := w.Finish(); n != 0 || err != nil {
+		t.Fatal(n, err)
+	}
+	f, err := Open(p)
+	if err != nil || f.Rows != 0 || f.Parts != 0 || f.Verify() != nil {
+		t.Fatal(err)
 	}
 	f.Close()
-	b := brokenWriter(t, 1)
-	if _, err := b.Finish(); err == nil {
-		t.Fatal("closed file")
+	dir := t.TempDir()
+	w, _ = NewWriter(filepath.Join(dir, "a"), testInfo())
+	w.tw = bufio.NewWriterSize(failWriter{}, 8)
+	w.Add([]byte("pa"), row(0, 1, 1))
+	if _, err := w.Finish(); err == nil {
+		t.Fatal("table failure")
 	}
-	if _, err := os.Stat(b.Path + ".tmp"); !os.IsNotExist(err) {
-		t.Fatal("temporary file kept")
+	w, _ = NewWriter(filepath.Join(dir, "b"), testInfo())
+	w.tf.Close()
+	if _, err := w.Finish(); err == nil {
+		t.Fatal("copy failure")
+	}
+	w, _ = NewWriter(filepath.Join(dir, "c"), testInfo())
+	w.f.Close()
+	if _, err := w.Finish(); err == nil {
+		t.Fatal("close failure")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "c.tmp")); err == nil {
+		t.Fatal("temporary file left")
 	}
 }

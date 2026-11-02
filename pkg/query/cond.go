@@ -1,12 +1,16 @@
 //ff:type feature=query type=model
-//ff:what Cond — one condition as written: TAG kind (name, Kind, Codec) and the fields it fixes
+//ff:what Cond — one condition: TAGs and predicates on one record, or silk conditions on one entity
 package query
 
-// Cond holds when a record of Kind·Codec has every field of Fields.
+import (
+	"github.com/geul-org/silk/pkg/decl"
+	"github.com/geul-org/silk/pkg/sig"
+)
+
 type Cond struct {
-	Text   string
-	Name   string
-	Kind   uint8
-	Codec  uint8
-	Fields []FieldCond
+	Name  string
+	Tags  []uint16
+	Preds []Pred
+	Silk  []sig.Cond
+	Decl  *decl.Decl
 }

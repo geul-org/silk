@@ -1,14 +1,11 @@
-//ff:func feature=index type=reader control=iteration dimension=2
-//ff:what closeSegs — close every segment file of every section
+//ff:func feature=index type=writer control=iteration dimension=1
+//ff:what closeSegs — close segments
 package index
 
 import "github.com/geul-org/silk/pkg/seg"
 
-// closeSegs ignores close errors (files are read-only).
-func closeSegs(ss [][]*seg.File) {
-	for _, fs := range ss {
-		for _, f := range fs {
-			f.Close()
-		}
+func closeSegs(fs []*seg.File) {
+	for _, f := range fs {
+		f.Close()
 	}
 }

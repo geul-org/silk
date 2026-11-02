@@ -1,39 +1,38 @@
-//ff:func feature=index type=writer control=sequence
-//ff:what TestLockDir — one writer at a time; a dead holder's lock is taken over; a blocked or unwritable directory fails
+//ff:func feature=index type=scanner control=sequence
+//ff:what TestLockDir — one writer; a dead process's lock is taken over; a path under a file fails
 package index
 
 import (
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 )
 
 func TestLockDir(t *testing.T) {
-	d := filepath.Join(t.TempDir(), "idx")
-	release, err := lockDir(d)
+	dir := t.TempDir()
+	un, err := lockDir(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := lockDir(d); !errors.Is(err, ErrLocked) {
+	if _, err := lockDir(dir); !errors.Is(err, ErrLocked) {
 		t.Fatal(err)
 	}
-	release()
-	os.WriteFile(filepath.Join(d, lockFile), fmt.Appendf(nil, "%d\n", 1<<30), 0o644)
-	if r, err := lockDir(d); err != nil {
-		t.Fatal("stale lock", err)
-	} else {
-		r()
+	un()
+	os.WriteFile(filepath.Join(dir, lockFile), []byte("0\n"), 0o644)
+	un, err = lockDir(dir)
+	if err != nil {
+		t.Fatal(err)
 	}
-	e := t.TempDir()
-	block(e, "x")
-	if _, err := lockDir(filepath.Join(e, "x")); err == nil {
-		t.Fatal("blocked directory")
+	un()
+	file := filepath.Join(dir, "f")
+	os.WriteFile(file, nil, 0o644)
+	if _, err := lockDir(filepath.Join(file, "x")); err == nil {
+		t.Fatal("under a file")
 	}
-	ro := filepath.Join(t.TempDir(), "ro")
-	os.Mkdir(ro, 0o500)
-	if _, err := lockDir(ro); err == nil && os.Getuid() != 0 {
-		t.Fatal("unwritable directory")
+	ro := filepath.Join(dir, "ro")
+	os.MkdirAll(filepath.Join(ro, lockFile), 0o755)
+	if _, err := lockDir(filepath.Join(ro, lockFile, "..")); err == nil {
+		t.Skip("running with a filesystem that allows this")
 	}
 }

@@ -1,8 +1,10 @@
 //ff:type feature=query type=model
-//ff:what Query — conditions a document must all meet
+//ff:what Query — conditions that must hold in one document, and how to answer
 package query
 
-// Query is a conjunction at document level.
 type Query struct {
 	Conds []Cond
+	Mode  string
+	Scan  bool
+	Index string
 }

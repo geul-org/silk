@@ -1,12 +1,11 @@
 //ff:func feature=index type=helper control=iteration dimension=1
-//ff:what rowsOf — total rows of segment references
+//ff:what rowsOf — rows of some segments
 package index
 
-// rowsOf sums Rows.
-func rowsOf(rs []SegRef) uint64 {
-	n := uint64(0)
-	for _, r := range rs {
-		n += r.Rows
+func rowsOf(ss []SegRef) uint64 {
+	var n uint64
+	for _, s := range ss {
+		n += s.Rows
 	}
 	return n
 }

@@ -1,12 +1,14 @@
 //ff:type feature=archive type=model
-//ff:what Set — one pack set: Issuer folder name ("" at the top), directory, manifest SHA-256 hex and generation
+//ff:what Set — one pack set at one generation: name, directory, manifest, objects and its reader
 package archive
 
-// Set is one pack set (`latest.txt`, `m/`, `o/`) at the generation it had
-// when the archive was opened.
+import "github.com/geul-org/gogeul/pkg/pack"
+
 type Set struct {
 	Name       string
 	Dir        string
 	Manifest   string
 	Generation uint64
+	Objects    []Object
+	r          *pack.Reader
 }

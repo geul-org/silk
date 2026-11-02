@@ -1,21 +1,22 @@
-// Package query answers SILK conditions over an index. A condition names a
-// TAG kind and field values (a TRIPLE's Predicate and Object, a LABEL's
-// language, ...); one document must meet every condition. The planner maps
-// each condition onto its section's spec: a field that is the partition key
-// picks the partition, a field that is the sort key is binary-searched in
-// sorted runs (appended segments are scanned), and every candidate record is
-// then decoded with gogeul and checked field by field. Conditions are joined
-// by document with a merge join on sequence numbers.
+// Package query compiles conditions to field predicates and silk patterns,
+// plans each on the best section, narrows candidates through rows, and opens
+// only the documents an exact check still needs. See docs/query.md.
 package query
 
 import "errors"
 
+const (
+	// Result units.
+	ModeDocs    = "docs"
+	ModeRecords = "records"
+	ModeKeys    = "keys"
+)
+
 var (
-	// ErrSyntax means a condition could not be read.
+	// ErrSyntax means a condition cannot be read.
 	ErrSyntax = errors.New("silk/query: bad condition")
-	// ErrVerify means a candidate record is not a record of the condition's
-	// kind (a bug or a damaged index).
-	ErrVerify = errors.New("silk/query: exact check failed")
-	// ErrNoSection means the index spec does not index the condition's kind.
-	ErrNoSection = errors.New("silk/query: the index does not cover this kind")
+	// ErrNoPlan means no section can answer and -scan was not given.
+	ErrNoPlan = errors.New("silk/query: no section answers this condition")
+	// ErrNotCovered means -keys was asked of a section that does not cover the condition.
+	ErrNotCovered = errors.New("silk/query: section does not cover the condition; -keys cannot answer")
 )

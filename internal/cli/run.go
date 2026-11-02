@@ -1,28 +1,28 @@
-//ff:func feature=cli type=command control=selection
-//ff:what Run — dispatch `silkg index …`, `silkg query …` and help; the process exit code (0 ok, 1 failure, 2 usage)
+//ff:func feature=cli type=command control=sequence
+//ff:what Run — dispatch by the first word; the exit code
 package cli
 
 import (
+	"context"
 	"fmt"
 	"io"
 )
 
-// Run executes one silkg command line (without the program name).
-func Run(args []string, stdout, stderr io.Writer) int {
+func Run(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprint(stderr, usageText)
-		return 2
+		fmt.Fprint(stderr, usage)
+		return exitUsage
 	}
-	switch args[0] {
-	case "index":
-		return runIndex(args[1:], stdout, stderr)
-	case "query":
-		return runQuery(args[1:], stdout, stderr)
-	case "help", "-h", "-help", "--help":
-		fmt.Fprint(stdout, usageText)
-		return 0
-	default:
-		fmt.Fprintf(stderr, "silkg: unknown command %q\n\n%s", args[0], usageText)
-		return 2
+	cmds := map[string]func(*env, []string) error{"create": runCreate, "drop": runDrop, "list": runList, "index": runIndex, "query": runQuery}
+	fn, ok := cmds[args[0]]
+	if !ok {
+		fmt.Fprint(stderr, usage)
+		return exitUsage
 	}
+	e := &env{ctx: ctx, in: stdin, out: stdout, err: stderr}
+	if err := fn(e, args[1:]); err != nil {
+		fmt.Fprintln(stderr, "silkg:", err)
+		return exitError
+	}
+	return exitOK
 }

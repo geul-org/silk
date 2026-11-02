@@ -1,40 +1,37 @@
-//ff:func feature=index type=rule control=iteration dimension=1
-//ff:what Verify — check an index against its archive: sets, every segment (hash, order, footer against the spec), the live documents, each section's live rows against rows rebuilt from the documents, and dead counts
+//ff:func feature=index type=rule control=sequence
+//ff:what Verify — every segment and table file, then a fresh build's rows against this index's, document numbers read as identities
 package index
 
 import (
 	"context"
+	"os"
+	"path/filepath"
+	"strconv"
 
 	"github.com/geul-org/silk/pkg/archive"
 )
 
-// Verify reads every live document again; it is as expensive as a build.
-func Verify(ctx context.Context, a *archive.Archive, dir string) (VerifyReport, error) {
-	ix, err := Open(a, dir)
+func Verify(ctx context.Context, ar *archive.Archive, dir string, o Options) error {
+	ix, err := Open(ctx, ar, dir, 0)
 	if err != nil {
-		return VerifyReport{}, err
+		return err
 	}
 	defer ix.Close()
-	docs, err := liveDocs(ctx, a)
+	if err := ix.checkFiles(); err != nil {
+		return err
+	}
+	fresh := filepath.Join(dir, dirTmp, "verify-"+strconv.Itoa(os.Getpid()))
+	defer os.RemoveAll(fresh)
+	if err := cloneDecls(dir, fresh, ix.Manifest); err != nil {
+		return err
+	}
+	if _, err := Build(ctx, ar, fresh, o); err != nil {
+		return err
+	}
+	fx, err := Open(ctx, ar, fresh, 0)
 	if err != nil {
-		return VerifyReport{}, err
+		return err
 	}
-	seqs, err := ix.checkLive(docs)
-	if err != nil {
-		return VerifyReport{}, err
-	}
-	want, err := expectRows(ix, docs, seqs)
-	if err != nil {
-		return VerifyReport{}, err
-	}
-	rep := VerifyReport{Generation: ix.M.Generation, Sections: len(ix.M.Sections), Docs: len(docs)}
-	for i := range ix.M.Sections {
-		n, err := ix.checkSection(i, want[i])
-		if err != nil {
-			return rep, err
-		}
-		rep.Segments += len(ix.Segs[i])
-		rep.Rows += n
-	}
-	return rep, nil
+	defer fx.Close()
+	return ix.same(fx)
 }
