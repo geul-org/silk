@@ -1,21 +1,30 @@
 silk — Notice
 =============
 
-Scope of CC0
-------------
-The GEUL project's own work in this repository — code, documentation, data and
-other material we created — is dedicated to the public domain under CC0 1.0
-Universal. LICENSE holds the CC0 1.0 legal text verbatim (unmodified, so that
-it is recognised as CC0-1.0); this section states what it covers.
+License scope
+-------------
+Code in this repository is licensed under the MIT License (LICENSE).
 
-CC0 covers only our own work. Third-party material keeps its own license and is
-not covered by CC0: Go modules such as klauspost/compress (BSD-3-Clause),
-listed below with their licenses.
+CC0 data and documents in this repository:
+  - README.md and docs/
+  - testdata/grammar/ (grammar data produced by the GEUL project)
+  - the GEUL documents in testdata/archive converted from Wikidata items
+    (Wikidata itself is CC0)
+
+Data and documents that the GEUL project produced are dedicated to the public
+domain under CC0 1.0 Universal
+(https://creativecommons.org/publicdomain/zero/1.0/legalcode). No separate
+CC0 text file is kept here; the legal code at that address applies.
+
+Versions released before 2026-11-14 under CC0 remain CC0.
+
+Third-party material keeps its own license and is covered by neither MIT nor
+CC0 above: Go modules such as klauspost/compress (BSD-3-Clause), listed below with their licenses.
 
 --------------------------------------------------------------------------------
 Go (module: github.com/geul-org/silk)
 --------------------------------------------------------------------------------
-silk reads GEUL pack archives through github.com/geul-org/gogeul (CC0 1.0,
+silk reads GEUL pack archives through github.com/geul-org/gogeul (MIT,
 GEUL project). Its pkg/pack compiles in github.com/klauspost/compress, so every
 silk program that opens an archive includes it.
 

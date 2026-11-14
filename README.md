@@ -76,4 +76,4 @@ Documents: [docs/segments.md](docs/segments.md),
 
 ## License
 
-CC0 1.0 for our own work; see LICENSE and NOTICE.
+MIT for the code ([LICENSE](LICENSE)); CC0 1.0 for the data and documents we produced; see NOTICE.
